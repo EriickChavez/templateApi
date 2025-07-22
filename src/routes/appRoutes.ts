@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { AppController } from '../controllers/AppController';
+import { validateName } from '../middlewares/validators';
 
 const router = Router();
 const appController = new AppController();
@@ -16,7 +17,7 @@ router.get('/', appController.getAppInfo);
  * @desc    Obtener saludo personalizado
  * @access  Public
  */
-router.get('/saludo/:nombre', appController.getPersonalizedGreeting);
+router.get('/saludo/:nombre', validateName, appController.getPersonalizedGreeting);
 
 /**
  * @route   GET /health
