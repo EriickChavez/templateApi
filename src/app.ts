@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import { config } from './config/env';
 import routes from './routes';
-import { errorHandler, notFoundHandler } from './middlewares/errorHandler';
+import { errorHandler, notFoundHandler, initErrorSystem, globalErrorCatcher } from './middlewares/errorHandler';
 import { 
   corsOptions, 
   generalLimiter, 
@@ -15,6 +15,12 @@ import { sanitizeInput } from './middlewares/validators';
 
 const app = express();
 const PORT = config.PORT;
+
+// Inicializar sistema de errores
+(async () => {
+  await initErrorSystem();
+  globalErrorCatcher();
+})();
 
 // Trust proxy (importante para rate limiting e IP logging)
 app.set('trust proxy', 1);
@@ -40,7 +46,7 @@ app.use('/', routes);
 // Manejo de rutas no encontradas
 app.use(notFoundHandler);
 
-// Manejo global de errores
+// Manejo global de errores (debe ir al final)
 app.use(errorHandler);
 
 // Iniciar servidor
@@ -48,6 +54,8 @@ app.listen(PORT, () => {
   console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
   console.log(`🌍 Entorno: ${config.NODE_ENV}`);
   console.log(`📦 Versión: ${config.API_VERSION}`);
+  console.log(`🛡️  Sistema de errores: ✅ Activado`);
+  console.log(`📂 Logs de errores: ${config.NODE_ENV === 'production' ? '📝 Archivo' : '🖥️  Consola'}`);
   console.log(`📝 Endpoints disponibles:`);
   console.log(`   GET / - Hola Mundo`);
   console.log(`   GET /saludo/:nombre - Saludo personalizado`);

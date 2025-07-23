@@ -33,4 +33,11 @@ router.get('/health', appController.getHealthStatus);
  */
 router.get('/config', appController.getConfigInfo);
 
+/**
+ * @route   POST /test-error
+ * @desc    Endpoint para probar diferentes tipos de errores
+ * @access  Public (solo para testing)
+ */
+router.post('/test-error', appController.testError);
+
 export default router;
