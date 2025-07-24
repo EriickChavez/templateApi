@@ -23,6 +23,8 @@
   },
   "homepage": "https://github.com/EriickChavez/templateApi#readme",
   "dependencies": {
+    "@types/mongoose": "^5.11.96",
+    "@types/uuid": "^10.0.0",
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
     "dotenv": "^17.2.0",
@@ -31,6 +33,9 @@
     "express-validator": "^7.2.1",
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.16.4",
+    "mysql2": "^3.14.2",
+    "uuid": "^11.1.0",
     "validator": "^13.15.15"
   },
   "devDependencies": {

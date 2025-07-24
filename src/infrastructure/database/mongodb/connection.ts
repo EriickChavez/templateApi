@@ -1,0 +1,170 @@
+import mongoose from 'mongoose';
+import { config } from '../../../config/env';
+
+class MongoDBConnection {
+  private static instance: MongoDBConnection;
+  private isConnected = false;
+
+  private constructor() {}
+
+  public static getInstance(): MongoDBConnection {
+    if (!MongoDBConnection.instance) {
+      MongoDBConnection.instance = new MongoDBConnection();
+    }
+    return MongoDBConnection.instance;
+  }
+
+  public async connect(): Promise<void> {
+    if (this.isConnected) {
+      console.log('🍃 MongoDB ya está conectado');
+      return;
+    }
+
+    try {
+      const mongoUri = config.DATABASE_URL || 'mongodb://localhost:27017/templateapi';
+      
+      // Configuraciones de conexión optimizadas
+      const options = {
+        // Configuraciones de conexión
+        maxPoolSize: 10, // Mantener hasta 10 conexiones en el pool
+        serverSelectionTimeoutMS: 5000, // Mantener intentando seleccionar servidor por 5s
+        socketTimeoutMS: 45000, // Cerrar sockets después de 45s de inactividad
+        bufferMaxEntries: 0, // Deshabilitar mongoose buffering
+        bufferCommands: false, // Deshabilitar mongoose buffering
+        
+        // Configuraciones de autenticación y seguridad
+        authSource: 'admin', // Base de datos para autenticación
+        
+        // Configuraciones de escritura
+        w: 'majority', // Acknowledge de escritura de la mayoría
+        wtimeoutMS: 2000, // Timeout para acknowledge de escritura
+        
+        // Configuraciones de lectura
+        readPreference: 'primary', // Leer del primario
+        
+        // Configuraciones de reconexión
+        heartbeatFrequencyMS: 10000, // Cada 10s verificar el estado del servidor
+        retryWrites: true, // Reintentar escrituras automáticamente
+        
+        // Configuraciones para desarrollo/producción
+        compressors: ['snappy'], // Compresión de datos
+      };
+
+      console.log('🔄 Conectando a MongoDB...');
+      console.log(`📍 URI: ${mongoUri.replace(/\/\/.*@/, '//***:***@')}`); // Ocultar credenciales
+
+      await mongoose.connect(mongoUri, options);
+
+      this.isConnected = true;
+
+      // Event listeners para monitoreo
+      mongoose.connection.on('connected', () => {
+        console.log('✅ MongoDB conectado exitosamente');
+        console.log(`🗄️  Base de datos: ${mongoose.connection.db?.databaseName}`);
+        console.log(`🌐 Host: ${mongoose.connection.host}:${mongoose.connection.port}`);
+      });
+
+      mongoose.connection.on('error', (error) => {
+        console.error('❌ Error de conexión MongoDB:', error);
+        this.isConnected = false;
+      });
+
+      mongoose.connection.on('disconnected', () => {
+        console.log('⚠️  MongoDB desconectado');
+        this.isConnected = false;
+      });
+
+      mongoose.connection.on('reconnected', () => {
+        console.log('🔄 MongoDB reconectado');
+        this.isConnected = true;
+      });
+
+      // Configuraciones adicionales de Mongoose
+      mongoose.set('strictQuery', false); // Para compatibilidad futura
+      
+      if (config.NODE_ENV === 'development') {
+        mongoose.set('debug', true); // Logs de queries en desarrollo
+      }
+
+    } catch (error) {
+      console.error('💥 Error al conectar a MongoDB:', error);
+      this.isConnected = false;
+      throw error;
+    }
+  }
+
+  public async disconnect(): Promise<void> {
+    if (!this.isConnected) {
+      return;
+    }
+
+    try {
+      await mongoose.connection.close();
+      this.isConnected = false;
+      console.log('🔌 MongoDB desconectado exitosamente');
+    } catch (error) {
+      console.error('❌ Error al desconectar MongoDB:', error);
+      throw error;
+    }
+  }
+
+  public getConnection() {
+    return mongoose.connection;
+  }
+
+  public isConnectionReady(): boolean {
+    return this.isConnected && mongoose.connection.readyState === 1;
+  }
+
+  // Método para estadísticas de conexión
+  public getConnectionStats() {
+    const conn = mongoose.connection;
+    return {
+      isConnected: this.isConnected,
+      readyState: conn.readyState,
+      host: conn.host,
+      port: conn.port,
+      name: conn.name,
+      collections: Object.keys(conn.collections),
+      models: Object.keys(mongoose.models)
+    };
+  }
+
+  // Método para healthcheck
+  public async healthCheck(): Promise<boolean> {
+    try {
+      if (!this.isConnected) {
+        return false;
+      }
+
+      // Ping simple a la base de datos
+      await mongoose.connection.db?.admin().ping();
+      return true;
+    } catch (error) {
+      console.error('❌ MongoDB health check falló:', error);
+      return false;
+    }
+  }
+
+  // Método para limpiar la base de datos (solo para testing)
+  public async clearDatabase(): Promise<void> {
+    if (config.NODE_ENV === 'production') {
+      throw new Error('No se puede limpiar la base de datos en producción');
+    }
+
+    const collections = mongoose.connection.collections;
+    
+    for (const key in collections) {
+      const collection = collections[key];
+      await collection.deleteMany({});
+    }
+    
+    console.log('🧹 Base de datos limpiada');
+  }
+}
+
+export const mongoConnection = MongoDBConnection.getInstance();
+
+// Helper para uso directo
+export const connectMongoDB = () => mongoConnection.connect();
+export const disconnectMongoDB = () => mongoConnection.disconnect();

@@ -3,6 +3,7 @@ import cors from 'cors';
 import { config } from './config/env';
 import routes from './routes';
 import { errorHandler, notFoundHandler, initErrorSystem, globalErrorCatcher } from './middlewares/errorHandler';
+import { container } from './infrastructure/di/Container';
 import { 
   corsOptions, 
   generalLimiter, 
@@ -16,10 +17,23 @@ import { sanitizeInput } from './middlewares/validators';
 const app = express();
 const PORT = config.PORT;
 
-// Inicializar sistema de errores
+// Inicializar sistema de errores y contenedor DI
 (async () => {
-  await initErrorSystem();
-  globalErrorCatcher();
+  try {
+    console.log('🔧 Inicializando sistema...');
+    
+    // Inicializar sistema de errores
+    await initErrorSystem();
+    globalErrorCatcher();
+    
+    // Inicializar contenedor de inyección de dependencias
+    await container.initialize();
+    
+    console.log('✅ Sistema inicializado correctamente');
+  } catch (error) {
+    console.error('❌ Error al inicializar el sistema:', error);
+    process.exit(1);
+  }
 })();
 
 // Trust proxy (importante para rate limiting e IP logging)
@@ -50,7 +64,7 @@ app.use(notFoundHandler);
 app.use(errorHandler);
 
 // Iniciar servidor
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
   console.log(`🌍 Entorno: ${config.NODE_ENV}`);
   console.log(`📦 Versión: ${config.API_VERSION}`);
@@ -80,6 +94,47 @@ app.listen(PORT, () => {
   console.log(`   GET  /auth/user-area - Usuarios registrados`);
   console.log(`   GET  /auth/role-demo - Demo de roles`);
   console.log(`\n💡 Usa: Authorization: Bearer <token>`);
+});
+
+// Manejo de cierre graceful
+const gracefulShutdown = async (signal: string) => {
+  console.log(`\n🔄 Recibida señal ${signal}. Cerrando servidor gracefully...`);
+  
+  // Cerrar servidor HTTP
+  server.close(async () => {
+    console.log('🔌 Servidor HTTP cerrado');
+    
+    try {
+      // Limpiar conexiones de base de datos
+      await container.cleanup();
+      console.log('✅ Limpieza completada exitosamente');
+      process.exit(0);
+    } catch (error) {
+      console.error('❌ Error durante la limpieza:', error);
+      process.exit(1);
+    }
+  });
+
+  // Forzar cierre después de 10 segundos
+  setTimeout(() => {
+    console.error('⚠️  Forzando cierre del servidor...');
+    process.exit(1);
+  }, 10000);
+};
+
+// Registrar manejadores de señales
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+
+// Manejo de errores no capturados
+process.on('uncaughtException', (error) => {
+  console.error('💥 Uncaught Exception:', error);
+  gracefulShutdown('uncaughtException');
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('💥 Unhandled Rejection at:', promise, 'reason:', reason);
+  gracefulShutdown('unhandledRejection');
 });
 
 export default app;
