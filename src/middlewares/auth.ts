@@ -2,12 +2,15 @@ import { Request, Response, NextFunction } from 'express';
 import { AuthUtils, TokenPayload } from '../utils/auth';
 import { ResponseUtil } from '../utils/response';
 import { HttpStatus } from '../types';
+import { UserRole } from '../domain/entities/User';
 
 // Extender Request para incluir user
 declare global {
   namespace Express {
     interface Request {
-      user?: TokenPayload;
+      user?: TokenPayload & {
+        role: UserRole;
+      };
     }
   }
 }
@@ -53,20 +56,17 @@ export const optionalAuth = (req: Request, res: Response, next: NextFunction): v
 /**
  * Middleware para verificar roles específicos
  */
-export const requireRole = (allowedRoles: string | string[]) => {
+export const requireRole = (...allowedRoles: UserRole[]) => {
   return (req: Request, res: Response, next: NextFunction): void => {
     if (!req.user) {
       ResponseUtil.unauthorized(res, 'Token de autenticación requerido');
       return;
     }
 
-    const userRole = req.user.role || 'user';
-    const roles = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
-
-    if (!roles.includes(userRole)) {
+    if (!allowedRoles.includes(req.user.role)) {
       ResponseUtil.error(
         res,
-        `Acceso denegado. Roles requeridos: ${roles.join(', ')}`,
+        `Acceso denegado. Roles permitidos: ${allowedRoles.join(', ')}`,
         HttpStatus.FORBIDDEN
       );
       return;
@@ -77,9 +77,24 @@ export const requireRole = (allowedRoles: string | string[]) => {
 };
 
 /**
- * Middleware para verificar que el usuario sea propietario del recurso
+ * Middleware que requiere ser administrador
  */
-export const requireOwnership = (userIdParam: string = 'userId') => {
+export const requireAdmin = requireRole(UserRole.ADMIN);
+
+/**
+ * Middleware que requiere ser administrador o moderador
+ */
+export const requireAdminOrModerator = requireRole(UserRole.ADMIN, UserRole.MODERATOR);
+
+/**
+ * Middleware que permite cualquier usuario autenticado
+ */
+export const requireAuth = requireRole(UserRole.ADMIN, UserRole.MODERATOR, UserRole.USER, UserRole.GUEST);
+
+/**
+ * Middleware para verificar que el usuario sea propietario del recurso o admin
+ */
+export const requireOwnership = (userIdParam: string = 'id') => {
   return (req: Request, res: Response, next: NextFunction): void => {
     if (!req.user) {
       ResponseUtil.unauthorized(res, 'Token de autenticación requerido');
@@ -90,7 +105,7 @@ export const requireOwnership = (userIdParam: string = 'userId') => {
     const currentUserId = req.user.userId;
 
     // Admin puede acceder a cualquier recurso
-    if (req.user.role === 'admin') {
+    if (req.user.role === UserRole.ADMIN) {
       next();
       return;
     }
@@ -98,7 +113,7 @@ export const requireOwnership = (userIdParam: string = 'userId') => {
     if (resourceUserId !== currentUserId) {
       ResponseUtil.error(
         res,
-        'No tienes permisos para acceder a este recurso',
+        'Solo puedes acceder a tus propios recursos',
         HttpStatus.FORBIDDEN
       );
       return;

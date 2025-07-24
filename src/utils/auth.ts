@@ -1,11 +1,12 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { config } from '../config/env';
+import { UserRole } from '../domain/entities/User';
 
 export interface TokenPayload {
   userId: string;
   email: string;
-  role?: string;
+  role: UserRole;
   iat?: number;
   exp?: number;
 }

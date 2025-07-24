@@ -1,16 +1,21 @@
 import { Router } from 'express';
 import appRoutes from './appRoutes';
 import userRoutes from './userRoutes';
+import authRoutes from './authRoutes';
+import protectedRoutes from './protectedRoutes';
 
 const router = Router();
 
 // Rutas principales
 router.use('/', appRoutes);
 
-// Rutas del dominio de usuarios
+// Rutas de autenticación
+router.use('/auth', authRoutes);
+
+// Rutas del dominio de usuarios (ahora protegidas)
 router.use('/users', userRoutes);
 
-// Ruta de ejemplo para futuras funcionalidades
-// router.use('/api/v1/auth', authRoutes);
+// Rutas protegidas con control de acceso avanzado
+router.use('/protected', protectedRoutes);
 
 export default router;
