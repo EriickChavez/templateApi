@@ -11,7 +11,7 @@ export class DIContainer {
   private userRepository: UserRepository | null = null;
   private isInitialized = false;
 
-  private constructor() {}
+  private constructor() { }
 
   public static getInstance(): DIContainer {
     if (!DIContainer.instance) {
@@ -34,11 +34,11 @@ export class DIContainer {
     try {
       // Configurar repositorio basado en la configuración
       await this.setupRepository();
-      
+
       this.isInitialized = true;
       console.log('✅ Contenedor DI inicializado correctamente');
       console.log(`📋 Repositorio activo: ${this.userRepository?.constructor.name}`);
-      
+
     } catch (error) {
       console.error('❌ Error al inicializar contenedor DI:', error);
       throw error;
@@ -50,7 +50,6 @@ export class DIContainer {
    */
   private async setupRepository(): Promise<void> {
     const databaseUrl = config.DATABASE_URL;
-    
     if (!databaseUrl) {
       console.log('🗄️  Sin DATABASE_URL configurada - usando repositorio en memoria');
       this.userRepository = new InMemoryUserRepository();
@@ -68,7 +67,7 @@ export class DIContainer {
         console.log('🔄 Fallback a repositorio en memoria');
         this.userRepository = new InMemoryUserRepository();
       }
-    } 
+    }
     else if (databaseUrl.startsWith('mysql://')) {
       console.log('🐬 Configurando MySQL...');
       try {
@@ -80,7 +79,7 @@ export class DIContainer {
         console.log('🔄 Fallback a repositorio en memoria');
         this.userRepository = new InMemoryUserRepository();
       }
-    } 
+    }
     else {
       console.log('⚠️  DATABASE_URL no reconocida - usando repositorio en memoria');
       this.userRepository = new InMemoryUserRepository();
@@ -196,7 +195,7 @@ export class DIContainer {
     if (config.NODE_ENV !== 'test' && config.NODE_ENV !== 'development') {
       throw new Error('setRepository solo está disponible en entornos de test y desarrollo');
     }
-    
+
     this.userRepository = repository;
     console.log(`🔧 Repositorio cambiado a: ${repository.constructor.name}`);
   }

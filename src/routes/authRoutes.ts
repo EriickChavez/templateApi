@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { AuthController } from '../controllers/AuthController';
+import { DatabaseAuthController } from '../controllers/DatabaseAuthController';
 import { 
   authenticateToken, 
   requireRole, 

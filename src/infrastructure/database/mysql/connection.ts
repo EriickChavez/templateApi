@@ -40,29 +40,18 @@ class MySQLConnection {
         database: dbConfig.database,
         
         // Configuraciones del pool
-        connectionLimit: 10, // Máximo 10 conexiones simultáneas
-        acquireTimeout: 60000, // 1 minuto para obtener conexión
-        timeout: 60000, // 1 minuto timeout para queries
-        reconnect: true, // Reconectar automáticamente
+        connectionLimit: 10,
+        queueLimit: 0,
         
-        // Configuraciones de charset
+        // Configuraciones básicas
         charset: 'utf8mb4',
+        timezone: 'Z',
         
-        // Configuraciones de timezone
-        timezone: 'Z', // UTC
+        // SSL si es necesario
+        ssl: dbConfig.ssl || false,
         
-        // Configuraciones de SSL (para producción)
-        ssl: dbConfig.ssl,
-        
-        // Configuraciones adicionales
-        multipleStatements: false, // Seguridad: no permitir múltiples statements
-        dateStrings: false, // Devolver fechas como objetos Date
-        supportBigNumbers: true,
-        bigNumberStrings: false,
-        
-        // Pool event handlers
-        enableKeepAlive: true,
-        keepAliveInitialDelay: 0,
+        // Configuraciones de seguridad
+        multipleStatements: false
       });
 
       // Probar la conexión
@@ -128,22 +117,13 @@ class MySQLConnection {
   private setupEventListeners(): void {
     if (!this.pool) return;
 
-    this.pool.on('connection', (connection) => {
-      console.log(`🔗 Nueva conexión MySQL establecida: ${connection.threadId}`);
-    });
-
-    this.pool.on('error', (error) => {
-      console.error('❌ Error en pool de MySQL:', error);
-      if (error.code === 'PROTOCOL_CONNECTION_LOST') {
-        this.isConnected = false;
-        console.log('🔄 Reintentando conexión a MySQL...');
-        setTimeout(() => this.connect(), 2000);
-      }
-    });
-
-    this.pool.on('release', (connection) => {
-      console.log(`🔓 Conexión MySQL liberada: ${connection.threadId}`);
-    });
+    // Los event listeners de mysql2 son limitados, solo configuramos error handling básico
+    try {
+      // Configuración básica sin eventos específicos
+      console.log('📊 Pool de conexiones MySQL configurado');
+    } catch (error) {
+      console.error('❌ Error configurando event listeners:', error);
+    }
   }
 
   private async createTables(): Promise<void> {

@@ -137,11 +137,11 @@ const UserSchema = new Schema<IUserDocument>({
   toJSON: {
     transform: function(doc, ret) {
       // Remover campos sensibles al convertir a JSON
-      delete ret.passwordHash;
-      delete ret.emailVerificationToken;
-      delete ret.passwordResetToken;
-      delete ret.loginAttempts;
-      delete ret.lockUntil;
+      delete (ret as any).passwordHash;
+      delete (ret as any).emailVerificationToken;
+      delete (ret as any).passwordResetToken;
+      delete (ret as any).loginAttempts;
+      delete (ret as any).lockUntil;
       return ret;
     }
   }
@@ -184,7 +184,7 @@ UserSchema.methods.incLoginAttempts = function(this: IUserDocument) {
   const maxAttempts = 5;
   const lockTime = 2 * 60 * 60 * 1000; // 2 horas en milisegundos
   
-  if (this.loginAttempts + 1 >= maxAttempts && !this.isLocked) {
+  if ((this.loginAttempts || 0) + 1 >= maxAttempts && !this.isLocked) {
     updates.$set = { lockUntil: new Date(Date.now() + lockTime) };
   }
   
@@ -222,9 +222,6 @@ UserSchema.statics.getAdmins = function() {
   return this.find({ role: UserRole.ADMIN, status: UserStatus.ACTIVE });
 };
 
-// Crear y exportar el modelo
-export const UserModel = mongoose.model<IUserDocument>('User', UserSchema);
-
 // Tipos para TypeScript
 export interface IUserModel extends mongoose.Model<IUserDocument> {
   findByEmail(email: string): Promise<IUserDocument | null>;
@@ -232,3 +229,6 @@ export interface IUserModel extends mongoose.Model<IUserDocument> {
   findActive(): Promise<IUserDocument[]>;
   getAdmins(): Promise<IUserDocument[]>;
 }
+
+// Crear y exportar el modelo
+export const UserModel = mongoose.model<IUserDocument, IUserModel>('User', UserSchema);

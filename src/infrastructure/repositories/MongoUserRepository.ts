@@ -2,8 +2,7 @@ import { UserRepository } from '../../domain/repositories/UserRepository';
 import { User, UserRole, UserStatus } from '../../domain/entities/User';
 import { Email } from '../../domain/value-objects/Email';
 import { PersonName } from '../../domain/value-objects/PersonName';
-import { UserModel, IUserDocument } from '../database/mongodb/models/UserModel';
-import { AuthUtils } from '../../utils/auth';
+import { UserModel, IUserDocument, IUserModel } from '../database/mongodb/models/UserModel';
 
 export class MongoUserRepository implements UserRepository {
   
@@ -27,7 +26,7 @@ export class MongoUserRepository implements UserRepository {
       avatar: doc.avatar,
       lastLoginAt: doc.lastLoginAt,
       isEmailVerified: doc.isEmailVerified
-    }, doc._id.toString());
+    }, doc._id?.toString() || doc.id);
 
     // Establecer fechas y versión manualmente
     (user as any)._createdAt = doc.createdAt;

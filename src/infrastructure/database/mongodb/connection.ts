@@ -23,31 +23,13 @@ class MongoDBConnection {
     try {
       const mongoUri = config.DATABASE_URL || 'mongodb://localhost:27017/templateapi';
       
-      // Configuraciones de conexión optimizadas
+      // Configuraciones de conexión simplificadas
       const options = {
-        // Configuraciones de conexión
-        maxPoolSize: 10, // Mantener hasta 10 conexiones en el pool
-        serverSelectionTimeoutMS: 5000, // Mantener intentando seleccionar servidor por 5s
-        socketTimeoutMS: 45000, // Cerrar sockets después de 45s de inactividad
-        bufferMaxEntries: 0, // Deshabilitar mongoose buffering
-        bufferCommands: false, // Deshabilitar mongoose buffering
-        
-        // Configuraciones de autenticación y seguridad
-        authSource: 'admin', // Base de datos para autenticación
-        
-        // Configuraciones de escritura
-        w: 'majority', // Acknowledge de escritura de la mayoría
-        wtimeoutMS: 2000, // Timeout para acknowledge de escritura
-        
-        // Configuraciones de lectura
-        readPreference: 'primary', // Leer del primario
-        
-        // Configuraciones de reconexión
-        heartbeatFrequencyMS: 10000, // Cada 10s verificar el estado del servidor
-        retryWrites: true, // Reintentar escrituras automáticamente
-        
-        // Configuraciones para desarrollo/producción
-        compressors: ['snappy'], // Compresión de datos
+        maxPoolSize: 10,
+        serverSelectionTimeoutMS: 5000,
+        socketTimeoutMS: 45000,
+        bufferMaxEntries: 0,
+        bufferCommands: false
       };
 
       console.log('🔄 Conectando a MongoDB...');

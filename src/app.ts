@@ -4,13 +4,13 @@ import { config } from './config/env';
 import routes from './routes';
 import { errorHandler, notFoundHandler, initErrorSystem, globalErrorCatcher } from './middlewares/errorHandler';
 import { container } from './infrastructure/di/Container';
-import { 
-  corsOptions, 
-  generalLimiter, 
-  helmetConfig, 
-  validateContentType, 
-  removeUnnecessaryHeaders, 
-  securityLogger 
+import {
+  corsOptions,
+  generalLimiter,
+  helmetConfig,
+  validateContentType,
+  removeUnnecessaryHeaders,
+  securityLogger
 } from './middlewares/security';
 import { sanitizeInput } from './middlewares/validators';
 
@@ -21,14 +21,14 @@ const PORT = config.PORT;
 (async () => {
   try {
     console.log('🔧 Inicializando sistema...');
-    
+
     // Inicializar sistema de errores
     await initErrorSystem();
     globalErrorCatcher();
-    
+
     // Inicializar contenedor de inyección de dependencias
     await container.initialize();
-    
+
     console.log('✅ Sistema inicializado correctamente');
   } catch (error) {
     console.error('❌ Error al inicializar el sistema:', error);
@@ -99,11 +99,11 @@ const server = app.listen(PORT, () => {
 // Manejo de cierre graceful
 const gracefulShutdown = async (signal: string) => {
   console.log(`\n🔄 Recibida señal ${signal}. Cerrando servidor gracefully...`);
-  
+
   // Cerrar servidor HTTP
   server.close(async () => {
     console.log('🔌 Servidor HTTP cerrado');
-    
+
     try {
       // Limpiar conexiones de base de datos
       await container.cleanup();

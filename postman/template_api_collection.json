@@ -1,0 +1,514 @@
+{
+  "info": {
+    "_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "name": "🚀 Template API - Complete Collection",
+    "description": "Colección completa para probar todos los endpoints de la Template API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "🌍 ENDPOINTS PÚBLICOS",
+      "item": [
+        {
+          "name": "Hola Mundo",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/",
+              "host": ["{{baseUrl}}"]
+            }
+          }
+        },
+        {
+          "name": "Saludo Personalizado",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/saludo/:nombre",
+              "host": ["{{baseUrl}}"],
+              "path": ["saludo", ":nombre"],
+              "variable": [
+                {
+                  "key": "nombre",
+                  "value": "Erick",
+                  "description": "Tu nombre aquí"
+                }
+              ]
+            },
+            "description": "Endpoint para saludar con un nombre personalizado"
+          }
+        },
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            },
+            "description": "Verifica el estado de la API"
+          }
+        },
+        {
+          "name": "Configuración (Solo Dev)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/config",
+              "host": ["{{baseUrl}}"],
+              "path": ["config"]
+            },
+            "description": "Muestra la configuración actual (solo en desarrollo)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔐 AUTENTICACIÓN",
+      "item": [
+        {
+          "name": "Registrar Usuario",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Guardar token automáticamente si el registro es exitoso",
+                  "if (pm.response.code === 201) {",
+                  "    const responseJson = pm.response.json();",
+                  "    if (responseJson.data && responseJson.data.token) {",
+                  "        pm.environment.set('token', responseJson.data.token);",
+                  "        console.log('Token guardado automáticamente:', responseJson.data.token);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@templateapi.com\",\n  \"password\": \"MiPassword123!\",\n  \"firstName\": \"Admin\",\n  \"lastName\": \"Principal\",\n  \"middleName\": \"Sistema\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            },
+            "description": "Registra un nuevo usuario. El primer usuario será automáticamente ADMIN."
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Guardar token automáticamente si el login es exitoso",
+                  "if (pm.response.code === 200) {",
+                  "    const responseJson = pm.response.json();",
+                  "    if (responseJson.data && responseJson.data.token) {",
+                  "        pm.environment.set('token', responseJson.data.token);",
+                  "        console.log('Token guardado automáticamente:', responseJson.data.token);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@templateapi.com\",\n  \"password\": \"MiPassword123!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Inicia sesión con email y contraseña"
+          }
+        },
+        {
+          "name": "Mi Información",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "me"]
+            },
+            "description": "Obtiene la información del usuario autenticado"
+          }
+        },
+        {
+          "name": "Cambiar Contraseña",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"MiPassword123!\",\n  \"newPassword\": \"MiNuevaPassword456!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/change-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "change-password"]
+            },
+            "description": "Cambia la contraseña del usuario autenticado"
+          }
+        },
+        {
+          "name": "Health Check Base de Datos",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "health"]
+            },
+            "description": "Verifica el estado de la conexión a la base de datos"
+          }
+        }
+      ]
+    },
+    {
+      "name": "👥 GESTIÓN DE USUARIOS",
+      "item": [
+        {
+          "name": "Listar Usuarios",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["users"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Página actual"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Usuarios por página"
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": "Buscar por nombre o email",
+                  "disabled": true
+                },
+                {
+                  "key": "role",
+                  "value": "",
+                  "description": "Filtrar por rol: admin, moderator, user, guest",
+                  "disabled": true
+                },
+                {
+                  "key": "status",
+                  "value": "",
+                  "description": "Filtrar por estado: active, inactive, suspended, deleted",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Lista usuarios con paginación (solo Admin/Moderador)"
+          }
+        },
+        {
+          "name": "Crear Usuario",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"usuario@templateapi.com\",\n  \"password\": \"Password123!\",\n  \"firstName\": \"Nuevo\",\n  \"lastName\": \"Usuario\",\n  \"role\": \"user\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["users"]
+            },
+            "description": "Crea un nuevo usuario (solo Admin)"
+          }
+        },
+        {
+          "name": "Ver Usuario por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users/:userId",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", ":userId"],
+              "variable": [
+                {
+                  "key": "userId",
+                  "value": "USER_ID_AQUI",
+                  "description": "ID del usuario a consultar"
+                }
+              ]
+            },
+            "description": "Obtiene un usuario por ID (propio o Admin)"
+          }
+        },
+        {
+          "name": "Estadísticas de Usuarios",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "stats"]
+            },
+            "description": "Obtiene estadísticas de usuarios (solo Admin)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🎭 EJEMPLOS DE ROLES",
+      "item": [
+        {
+          "name": "Área Solo Admin",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/admin-only",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "admin-only"]
+            },
+            "description": "Endpoint que solo pueden acceder los administradores"
+          }
+        },
+        {
+          "name": "Área Moderadores",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/moderator-area",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "moderator-area"]
+            },
+            "description": "Endpoint para admins y moderadores"
+          }
+        },
+        {
+          "name": "Área Usuarios",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/user-area",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "user-area"]
+            },
+            "description": "Endpoint para usuarios registrados"
+          }
+        },
+        {
+          "name": "Demo de Roles",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/role-demo",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "role-demo"]
+            },
+            "description": "Demuestra cómo funcionan los diferentes roles"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔧 ADMINISTRACIÓN (Solo Dev)",
+      "item": [
+        {
+          "name": "Reiniciar Contenedor DI",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/container/restart",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "container", "restart"]
+            },
+            "description": "Reinicia el contenedor de inyección de dependencias (solo desarrollo)"
+          }
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "exec": [
+          "// Configurar variables base si no existen",
+          "if (!pm.environment.get('baseUrl')) {",
+          "    pm.environment.set('baseUrl', 'http://localhost:3000');",
+          "}",
+          "",
+          "// Log para debugging",
+          "console.log('Base URL:', pm.environment.get('baseUrl'));",
+          "console.log('Token:', pm.environment.get('token') ? 'Configurado' : 'No configurado');"
+        ],
+        "type": "text/javascript"
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "exec": [
+          "// Log de respuesta para debugging",
+          "console.log('Status:', pm.response.code);",
+          "console.log('Response:', pm.response.text());"
+        ],
+        "type": "text/javascript"
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}
