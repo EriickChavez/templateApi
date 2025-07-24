@@ -195,9 +195,29 @@ export class DIContainer {
     if (config.NODE_ENV !== 'test' && config.NODE_ENV !== 'development') {
       throw new Error('setRepository solo está disponible en entornos de test y desarrollo');
     }
-
+    
     this.userRepository = repository;
     console.log(`🔧 Repositorio cambiado a: ${repository.constructor.name}`);
+  }
+
+  /**
+   * Debug: muestra información del repositorio en memoria
+   */
+  public debugInMemoryRepository(): any {
+    if (this.userRepository?.constructor.name === 'InMemoryUserRepository') {
+      const repo = this.userRepository as any;
+      return {
+        type: 'InMemoryUserRepository',
+        totalUsers: repo.size ? repo.size() : 0,
+        allUsers: repo.getAllUsers ? repo.getAllUsers().map((user: any) => ({
+          id: user.id,
+          email: user.email.value,
+          name: user.displayName,
+          role: user.role
+        })) : []
+      };
+    }
+    return { type: this.userRepository?.constructor.name || 'Unknown', message: 'No es InMemory' };
   }
 }
 

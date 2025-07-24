@@ -1,120 +1,274 @@
-# Template API - Hola Mundo
+# 🚀 Template API - Sistema de Autenticación con Inyección de Dependencias
 
-Una API simple en Node.js con Express y TypeScript que responde "Hola Mundo".
+Una API completa con autenticación JWT, control de roles y arquitectura hexagonal con inyección de dependencias que soporta múltiples bases de datos.
 
-## 🚀 Características
+## ✨ Características
 
-- **Express.js** para el servidor web
-- **TypeScript** para tipado estático
-- **Nodemon** para desarrollo con recarga automática
-- **Endpoints RESTful** básicos
+- 🏗️ **Arquitectura Hexagonal** con inyección de dependencias
+- 🔐 **Autenticación JWT** completa con roles
+- 🗄️ **Multi-Base de Datos**: InMemory, MongoDB, MySQL
+- 🛡️ **Sistema de Seguridad** robusto con rate limiting
+- 👥 **Control de Roles**: Admin, Moderator, User, Guest
+- 📊 **Health Checks** y monitoreo integrado
+- 🧪 **Repositorio en Memoria** para desarrollo rápido
+- 📝 **Documentación completa** con ejemplos curl
+- 🎯 **Colección Postman** incluida
 
-## 📋 Requisitos
+## 🚀 Quick Start
 
-- Node.js (v16 o superior)
-- npm o yarn
-
-## 🛠️ Instalación
-
+### 1. Instalación
 ```bash
-# Clonar el repositorio
-git clone <tu-repo-url>
+git clone <repo-url>
 cd templateApi
-
-# Instalar dependencias
 npm install
 ```
 
-## 🚀 Uso
+### 2. Configuración
+```bash
+# Copia el archivo de ejemplo
+cp .env.example .env
 
-### Modo Desarrollo
+# Para desarrollo rápido (repositorio en memoria):
+# Deja DATABASE_URL comentada en .env
+
+# Para persistencia, descomenta y configura:
+# DATABASE_URL=mongodb://localhost:27017/templateapi
+# o
+# DATABASE_URL=mysql://root:password@localhost:3306/templateapi
+```
+
+### 3. Crear Usuario Admin
+```bash
+node create-admin.js
+# Sigue las instrucciones interactivas
+```
+
+### 4. Ejecutar
 ```bash
 npm run dev
 ```
 
-### Modo Producción
+🎉 **¡Listo!** Tu API estará corriendo en `http://localhost:3000`
+
+## 📚 Documentación
+
+| Documento | Descripción |
+|-----------|-----------|
+| [📖 Guía cURL](docs/CURL_GUIDE.md) | Comandos curl para todos los endpoints |
+| [🏗️ Inyección de Dependencias](docs/DEPENDENCY_INJECTION.md) | Sistema DI y configuración de BD |
+| [📋 Guía Fácil](docs/EASY_GUIDE.md) | Cómo agregar endpoints nuevos |
+| [📬 Postman Collection](postman/template_api_collection.json) | Colección completa para Postman |
+
+## 🌍 Endpoints Principales
+
+### Públicos
+```
+GET  /              - Hola Mundo
+GET  /saludo/:nombre - Saludo personalizado
+GET  /health        - Estado de la API
+GET  /config        - Configuración (solo dev)
+```
+
+### Autenticación
+```
+POST /auth/register - Registro de usuarios
+POST /auth/login    - Login
+GET  /auth/me       - Información del usuario
+POST /auth/change-password - Cambiar contraseña
+```
+
+### Con Inyección de Dependencias
+```
+POST /db/register   - Registro (BD)
+POST /db/login      - Login (BD)
+GET  /db/me         - Info usuario (BD)
+GET  /db/health     - Health check BD
+GET  /db/stats      - Estadísticas (Admin)
+GET  /db/users      - Listar usuarios
+```
+
+### Gestión de Usuarios
+```
+GET  /users         - Listar usuarios
+POST /users         - Crear usuario (Admin)
+GET  /users/:id     - Ver usuario
+```
+
+## 🗄️ Bases de Datos Soportadas
+
+### 🧠 InMemory (Desarrollo)
+- **Uso**: Desarrollo y testing rápido
+- **Configuración**: No configurar `DATABASE_URL`
+- **Persistencia**: Datos se pierden al reiniciar
+- **Ventaja**: Sin dependencias externas
+
+### 🍃 MongoDB
 ```bash
-# Compilar TypeScript
-npm run build
+# Local
+DATABASE_URL=mongodb://localhost:27017/templateapi
 
-# Ejecutar la versión compilada
-npm start
+# Atlas
+DATABASE_URL=mongodb+srv://user:pass@cluster.mongodb.net/templateapi
 ```
 
-### Ejecutar directamente con ts-node
+### 🐬 MySQL
 ```bash
-npm run start:dev
+# Local
+DATABASE_URL=mysql://root:password@localhost:3306/templateapi
+
+# Producción con SSL
+DATABASE_URL=mysql://user:pass@host:3306/templateapi?ssl=true
 ```
 
-## 📝 Endpoints
+## 👥 Sistema de Roles
 
-| Método | Endpoint | Descripción |
-|--------|----------|-------------|
-| GET | `/` | Hola Mundo básico con información del entorno |
-| GET | `/saludo/:nombre` | Saludo personalizado |
-| GET | `/health` | Estado de la API con información del sistema |
-| GET | `/config` | Configuración actual (solo en desarrollo) |
+| Rol | Permisos | Descripción |
+|-----|----------|-------------|
+| **Admin** | Todos | Control total del sistema |
+| **Moderator** | read, create, update, moderate | Gestión de contenido |
+| **User** | read, create, update_own | Usuario estándar |
+| **Guest** | read | Solo lectura |
 
-## 📁 Estructura del Proyecto
+**Nota**: El primer usuario registrado automáticamente se convierte en **Admin**.
 
-```
-templateApi/
-├── src/
-│   ├── config/
-│   │   └── env.ts      # Configuración de variables de entorno
-│   └── app.ts          # Archivo principal del servidor
-├── dist/               # Archivos compilados (generados)
-├── .env                # Variables de entorno (local)
-├── .env.example        # Ejemplo de variables de entorno
-├── .gitignore          # Archivos ignorados por git
-├── package.json        # Configuración del proyecto
-├── tsconfig.json       # Configuración de TypeScript
-└── README.md          # Este archivo
-```
+## 🔐 Autenticación
 
-## 🌍 Variables de Entorno
-
-El proyecto usa variables de entorno para la configuración. Copia el archivo de ejemplo:
-
+### Ejemplo de Registro
 ```bash
-cp .env.example .env
+curl -X POST http://localhost:3000/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "admin@templateapi.com",
+    "password": "MiPassword123!",
+    "firstName": "Admin",
+    "lastName": "Principal"
+  }'
 ```
 
-### Variables Disponibles
-
-| Variable | Descripción | Valor por Defecto |
-|----------|-------------|-------------------|
-| `PORT` | Puerto del servidor | `3000` |
-| `NODE_ENV` | Entorno de ejecución | `development` |
-| `API_VERSION` | Versión de la API | `v1` |
-| `CORS_ORIGIN` | Origen permitido para CORS | `*` |
-| `LOG_LEVEL` | Nivel de logging | `info` |
-| `DATABASE_URL` | URL de la base de datos | _opcional_ |
-| `JWT_SECRET` | Secreto para JWT | _opcional_ |
-
-### Configuración de Desarrollo
-
-Para desarrollo local, crea un archivo `.env` con:
-
+### Ejemplo de Login
 ```bash
+curl -X POST http://localhost:3000/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "admin@templateapi.com",
+    "password": "MiPassword123!"
+  }'
+```
+
+## 🛠️ Desarrollo
+
+### Estructura del Proyecto
+```
+src/
+├── app.ts                     # Punto de entrada
+├── config/                    # Configuración
+├── controllers/               # Controladores
+├── domain/                    # Lógica de dominio
+│   ├── entities/             # Entidades
+│   ├── repositories/         # Interfaces de repositorios
+│   └── services/             # Servicios de dominio
+├── infrastructure/           # Infraestructura
+│   ├── database/            # Conexiones BD
+│   ├── di/                  # Inyección de dependencias
+│   └── repositories/        # Implementaciones
+├── middlewares/             # Middlewares
+├── routes/                  # Rutas
+└── utils/                   # Utilidades
+```
+
+### Scripts Disponibles
+```bash
+npm run dev      # Desarrollo con nodemon
+npm run build    # Compilar TypeScript
+npm run start    # Producción
+npm run test     # Tests (no implementado)
+```
+
+### Agregar Nuevo Endpoint
+1. **Crear controlador** en `src/controllers/`
+2. **Definir rutas** en `src/routes/`
+3. **Registrar rutas** en `src/routes/index.ts`
+4. **Actualizar documentación**
+
+Ver [📋 Guía Fácil](docs/EASY_GUIDE.md) para detalles.
+
+## 📊 Monitoreo
+
+### Health Checks
+```bash
+# API general
+curl http://localhost:3000/health
+
+# Base de datos
+curl http://localhost:3000/db/health
+```
+
+### Estadísticas (Solo Admin)
+```bash
+curl -H "Authorization: Bearer $TOKEN" \
+  http://localhost:3000/db/stats
+```
+
+## 🧪 Testing
+
+### Con Postman
+1. Importa `postman/template_api_collection.json`
+2. Los tokens se guardan automáticamente
+3. Prueba todos los endpoints organizados por categorías
+
+### Con cURL
+Ver [📖 Guía cURL](docs/CURL_GUIDE.md) para comandos completos.
+
+## 🔧 Configuración Avanzada
+
+### Variables de Entorno
+```bash
+# Servidor
 PORT=3000
 NODE_ENV=development
-API_VERSION=v1
+
+# Base de Datos
+DATABASE_URL=mongodb://localhost:27017/templateapi
+
+# Seguridad
+JWT_SECRET=tu-secret-super-seguro-minimo-32-caracteres
+
+# Rate Limiting
+RATE_LIMIT_MAX_REQUESTS=100
+RATE_LIMIT_WINDOW_MS=900000
+
+# CORS
 CORS_ORIGIN=*
-LOG_LEVEL=info
 ```
 
-## 🔧 Scripts Disponibles
+### Configuración de Producción
+- ✅ Configurar `JWT_SECRET` seguro
+- ✅ Usar HTTPS
+- ✅ Configurar `CORS_ORIGIN` específico
+- ✅ Usar base de datos persistente
+- ✅ Configurar rate limiting estricto
 
-- `npm run dev` - Inicia el servidor en modo desarrollo con nodemon
-- `npm run build` - Compila TypeScript a JavaScript
-- `npm start` - Ejecuta la versión compilada
-- `npm run start:dev` - Ejecuta directamente con ts-node
+## 🚨 Seguridad
 
-## 🌐 URLs de Prueba
+- 🛡️ **Helmet** para headers de seguridad
+- 🚦 **Rate Limiting** configurado
+- 🔐 **JWT** con expiración
+- 🧹 **Sanitización** de inputs
+- 📝 **Logging** de seguridad
+- 🔒 **Validación** de contraseñas
 
-Una vez que el servidor esté corriendo:
+## 📈 Escalabilidad
 
-- http://localhost:3000/ - Hola Mundo
-- http://localhost:3000/saludo/EriickChavez - Saludo personalizado
-- http://localhost:3000/health - Estado de la API
+- 🏗️ **Arquitectura Hexagonal**
+- 💉 **Inyección de Dependencias**
+- 🔄 **Pool de Conexiones**
+- 📊 **Health Checks**
+- 🧩 **Modular y extensible**
+
+## 💡 Tips
+
+- **Desarrollo rápido**: Usa repositorio en memoria
+- **Testing**: Importa la colección de Postman
+- **Producción**: Configura base de datos persistente
+- **Debugging**: Revisa los logs detallados
+- **Extensión**: Sigue la arquitectura hexagonal

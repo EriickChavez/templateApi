@@ -85,7 +85,7 @@ export class AuthUtils {
     }
 
     const parts = authHeader.split(' ');
-    
+
     if (parts.length !== 2 || parts[0] !== 'Bearer') {
       throw new Error('Formato de token inválido. Use: Bearer <token>');
     }
@@ -113,6 +113,7 @@ export class AuthUtils {
   static validatePasswordStrength(password: string): { isValid: boolean; errors: string[] } {
     const errors: string[] = [];
 
+
     if (password.length < 8) {
       errors.push('La contraseña debe tener al menos 8 caracteres');
     }
@@ -129,9 +130,9 @@ export class AuthUtils {
       errors.push('La contraseña debe contener al menos un número');
     }
 
-    if (!/(?=.*[@$!%*?&])/.test(password)) {
+    /*if (!/(?=.*[@$!%*?&])/.test(password)) {
       errors.push('La contraseña debe contener al menos un carácter especial (@$!%*?&)');
-    }
+    }*/
 
     return {
       isValid: errors.length === 0,
@@ -145,11 +146,11 @@ export class AuthUtils {
   static generateRandomCode(length: number = 6): string {
     const characters = '0123456789';
     let result = '';
-    
+
     for (let i = 0; i < length; i++) {
       result += characters.charAt(Math.floor(Math.random() * characters.length));
     }
-    
+
     return result;
   }
 

@@ -1,6 +1,18 @@
 # Sistema de Inyección de Dependencias
 
-Este proyecto implementa un sistema robusto de inyección de dependencias con soporte para múltiples bases de datos.
+Este proyecto implementa un sistema robusto de inyección de dependencias con soporte para múltiples bases de datos y repositorio en memoria.
+
+## 🚀 Quick Start
+
+### Opción 1: Repositorio en Memoria (Recomendado para desarrollo)
+1. Deja `DATABASE_URL` comentada en tu `.env`
+2. Ejecuta `npm run dev`
+3. Los datos se almacenan en RAM (se pierden al reiniciar)
+
+### Opción 2: Base de Datos Persistente
+1. Configura `DATABASE_URL` en tu `.env`
+2. Ejecuta `npm run dev`
+3. Los datos persisten entre reinicios
 
 ## 🏗️ Arquitectura
 
