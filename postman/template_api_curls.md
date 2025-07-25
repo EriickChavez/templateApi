@@ -114,7 +114,7 @@ curl -X POST {{baseUrl}}/auth/container/restart \
 
 **Instrucciones:**
 
-1.  **Reemplaza `{{baseUrl}}`** con la URL base real de tu API (por ejemplo, `http://localhost:3000`).
+1.  **Reemplaza `{{baseUrl}}`** con la URL base real de tu API (por ejemplo, `http://localhost:4000`).
 2.  **Reemplaza `TU_TOKEN_AQUI`** con el token JWT que obtengas después de iniciar sesión o registrarte.
 3.  **Reemplaza `USER_ID_AQUI`** con el ID real del usuario que quieras consultar.
 

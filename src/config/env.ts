@@ -12,7 +12,7 @@ interface EnvConfig {
   JWT_SECRET?: string;
   CORS_ORIGIN: string;
   LOG_LEVEL: string;
-  
+
   // MySQL específico
   MYSQL_HOST?: string;
   MYSQL_PORT?: number;
@@ -20,7 +20,7 @@ interface EnvConfig {
   MYSQL_PASSWORD?: string;
   MYSQL_DATABASE?: string;
   MYSQL_SSL?: boolean;
-  
+
   // MongoDB específico
   MONGODB_URI?: string;
   MONGODB_DATABASE?: string;
@@ -37,7 +37,7 @@ const getEnvVar = (name: string, defaultValue?: string): string => {
 const getEnvNumber = (name: string, defaultValue: number): number => {
   const value = process.env[name];
   if (!value) return defaultValue;
-  
+
   const parsed = parseInt(value, 10);
   if (isNaN(parsed)) {
     throw new Error(`Variable de entorno ${name} debe ser un número válido`);
@@ -46,14 +46,14 @@ const getEnvNumber = (name: string, defaultValue: number): number => {
 };
 
 export const config: EnvConfig = {
-  PORT: getEnvNumber('PORT', 3000),
+  PORT: getEnvNumber('PORT', 4000),
   NODE_ENV: getEnvVar('NODE_ENV', 'development'),
   API_VERSION: getEnvVar('API_VERSION', 'v1'),
   DATABASE_URL: process.env.DATABASE_URL,
   JWT_SECRET: process.env.JWT_SECRET,
   CORS_ORIGIN: getEnvVar('CORS_ORIGIN', '*'),
   LOG_LEVEL: getEnvVar('LOG_LEVEL', 'info'),
-  
+
   // MySQL específico
   MYSQL_HOST: process.env.MYSQL_HOST,
   MYSQL_PORT: getEnvNumber('MYSQL_PORT', 3306),
@@ -61,7 +61,7 @@ export const config: EnvConfig = {
   MYSQL_PASSWORD: process.env.MYSQL_PASSWORD,
   MYSQL_DATABASE: process.env.MYSQL_DATABASE,
   MYSQL_SSL: process.env.MYSQL_SSL === 'true',
-  
+
   // MongoDB específico
   MONGODB_URI: process.env.MONGODB_URI,
   MONGODB_DATABASE: process.env.MONGODB_DATABASE

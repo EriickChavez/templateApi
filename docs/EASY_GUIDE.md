@@ -26,7 +26,7 @@ export default router;
 
 ### Paso 4: Verifica que funcione
 - Guarda los cambios y corre tu aplicación.
-- Abre el navegador y ve a `http://localhost:3000/hora`.
+- Abre el navegador y ve a `http://localhost:4000/hora`.
 - ¡Voila! Debes ver un texto que dice la hora.
 
 ## Crear una Nueva Inyección (o usar una existente)

@@ -6,7 +6,7 @@
 
 set -e  # Exit on any error
 
-BASE_URL="http://localhost:3000"
+BASE_URL="http://localhost:4000"
 ADMIN_EMAIL="admin@templateapi.com"
 ADMIN_PASSWORD="MiPassword123!"
 

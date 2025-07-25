@@ -122,7 +122,7 @@ export const updateUser = asyncHandler(async (req: Request, res: Response) => {
 
 ### Endpoint de Prueba
 ```bash
-POST http://localhost:3000/test-error
+POST http://localhost:4000/test-error
 Content-Type: application/json
 
 {

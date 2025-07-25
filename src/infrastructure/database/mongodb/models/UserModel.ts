@@ -35,7 +35,6 @@ const UserSchema = new Schema<IUserDocument>({
   email: {
     type: String,
     required: [true, 'Email es requerido'],
-    unique: true,
     lowercase: true,
     trim: true,
     match: [/^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'Email inválido']

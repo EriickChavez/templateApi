@@ -48,7 +48,7 @@ node create-admin.js
 npm run dev
 ```
 
-🎉 **¡Listo!** Tu API estará corriendo en `http://localhost:3000`
+🎉 **¡Listo!** Tu API estará corriendo en `http://localhost:4000`
 
 ## 📚 Documentación
 
@@ -135,7 +135,7 @@ DATABASE_URL=mysql://user:pass@host:3306/templateapi?ssl=true
 
 ### Ejemplo de Registro
 ```bash
-curl -X POST http://localhost:3000/auth/register \
+curl -X POST http://localhost:4000/auth/register \
   -H "Content-Type: application/json" \
   -d '{
     "email": "admin@templateapi.com",
@@ -147,7 +147,7 @@ curl -X POST http://localhost:3000/auth/register \
 
 ### Ejemplo de Login
 ```bash
-curl -X POST http://localhost:3000/auth/login \
+curl -X POST http://localhost:4000/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "email": "admin@templateapi.com",
@@ -197,16 +197,16 @@ Ver [📋 Guía Fácil](docs/EASY_GUIDE.md) para detalles.
 ### Health Checks
 ```bash
 # API general
-curl http://localhost:3000/health
+curl http://localhost:4000/health
 
 # Base de datos
-curl http://localhost:3000/db/health
+curl http://localhost:4000/db/health
 ```
 
 ### Estadísticas (Solo Admin)
 ```bash
 curl -H "Authorization: Bearer $TOKEN" \
-  http://localhost:3000/db/stats
+  http://localhost:4000/db/stats
 ```
 
 ## 🧪 Testing
@@ -224,7 +224,7 @@ Ver [📖 Guía cURL](docs/CURL_GUIDE.md) para comandos completos.
 ### Variables de Entorno
 ```bash
 # Servidor
-PORT=3000
+PORT=4000
 NODE_ENV=development
 
 # Base de Datos

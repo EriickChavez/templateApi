@@ -64,12 +64,12 @@ async function createAdmin() {
     console.log('===========================================');
     
     console.log('\n# 1. Registrar usuario:');
-    console.log(`curl -X POST http://localhost:3000/auth/register \\
+    console.log(`curl -X POST http://localhost:4000/auth/register \\
   -H "Content-Type: application/json" \\
   -d '${JSON.stringify(adminData)}'`);
 
     console.log('\n# 2. Login:');
-    console.log(`curl -X POST http://localhost:3000/auth/login \\
+    console.log(`curl -X POST http://localhost:4000/auth/login \\
   -H "Content-Type: application/json" \\
   -d '{"email": "${email}", "password": "${password}"}'`);
 
