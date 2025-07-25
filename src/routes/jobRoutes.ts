@@ -1,7 +1,7 @@
+import 'reflect-metadata';
 import { Router, Request, Response } from 'express';
 import { authenticateToken } from '../middlewares/auth';
-import { requireRole } from '../middlewares/roleBasedAccess';
-import { UserRole } from '../dto/UserDto';
+import { requireAccess, AccessRules } from '../middlewares/roleBasedAccess';
 import { validateBody, validateParams } from '../middlewares/validation';
 import { IsString, IsOptional, IsEnum, IsDateString, IsUUID } from 'class-validator';
 import { jobService, JobTypes } from '../services/JobService';
@@ -37,7 +37,7 @@ const router = Router();
 
 // Todas las rutas de jobs requieren autenticación y rol de admin
 router.use(authenticateToken);
-router.use(requireRole([UserRole.ADMIN]));
+router.use(requireAccess(AccessRules.adminOnly()));
 
 // POST /jobs/schedule - Programar un job
 router.post('/schedule', 

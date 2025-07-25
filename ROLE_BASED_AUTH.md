@@ -307,7 +307,7 @@ export class ContentController {
 
 ```bash
 # 1. Registrar un usuario
-curl -X POST http://localhost:3000/auth/register \
+curl -X POST http://localhost:4000/auth/register \
   -H "Content-Type: application/json" \
   -d '{
     "email": "test@example.com",
@@ -317,7 +317,7 @@ curl -X POST http://localhost:3000/auth/register \
   }'
 
 # 2. Login y obtener token
-curl -X POST http://localhost:3000/auth/login \
+curl -X POST http://localhost:4000/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "email": "test@example.com",
@@ -325,15 +325,15 @@ curl -X POST http://localhost:3000/auth/login \
   }'
 
 # 3. Usar token en requests protegidos
-curl -X GET http://localhost:3000/protected/my-permissions \
+curl -X GET http://localhost:4000/protected/my-permissions \
   -H "Authorization: Bearer YOUR_TOKEN_HERE"
 
 # 4. Probar ruta solo para admins (debería fallar con USER)
-curl -X GET http://localhost:3000/auth/admin-only \
+curl -X GET http://localhost:4000/auth/admin-only \
   -H "Authorization: Bearer YOUR_TOKEN_HERE"
 
 # 5. Crear contenido
-curl -X POST http://localhost:3000/protected/content \
+curl -X POST http://localhost:4000/protected/content \
   -H "Authorization: Bearer YOUR_TOKEN_HERE" \
   -H "Content-Type: application/json" \
   -d '{

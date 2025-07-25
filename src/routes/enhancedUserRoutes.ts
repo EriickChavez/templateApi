@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { authenticateToken } from '../middlewares/auth';
-import { requireRole } from '../middlewares/roleBasedAccess';
+import { requireAccess, AccessRules } from '../middlewares/roleBasedAccess';
 import { validateQuery, validateBody, validateParams } from '../middlewares/validation';
 import { 
   FilterUsersDto, 
@@ -20,7 +20,7 @@ router.use(authenticateToken);
 // GET /users - Listar usuarios con paginación y filtros
 // Acceso: Admin y Moderator
 router.get('/',
-  requireRole([UserRole.ADMIN, UserRole.MODERATOR]),
+  requireAccess(AccessRules.adminOrModerator()),
   validateQuery(FilterUsersDto, { optional: true }),
   userController.getUsers.bind(userController)
 );
@@ -35,7 +35,7 @@ router.get('/:id',
 // POST /users - Crear nuevo usuario
 // Acceso: Solo Admin
 router.post('/',
-  requireRole([UserRole.ADMIN]),
+  requireAccess(AccessRules.adminOnly()),
   validateBody(CreateUserDto),
   userController.createUser.bind(userController)
 );

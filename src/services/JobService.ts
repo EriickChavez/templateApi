@@ -1,4 +1,4 @@
-import Agenda from 'agenda';
+import Agenda, { Job } from 'agenda';
 import { config } from '../config/env';
 
 // Interfaces para jobs
@@ -39,14 +39,15 @@ export class JobService {
   private isConnected = false;
 
   constructor() {
+    if (!config.DATABASE_URL) {
+      throw new Error('JobService requires DATABASE_URL to be configured');
+    }
+    
     // Configurar Agenda
     this.agenda = new Agenda({
       db: {
-        address: config.DATABASE_URL || 'mongodb://localhost:27017/templateapi',
-        collection: 'jobs',
-        options: {
-          useUnifiedTopology: true
-        }
+        address: config.DATABASE_URL,
+        collection: 'jobs'
       },
       processEvery: '10 seconds', // Procesar jobs cada 10 segundos
       maxConcurrency: 5, // Máximo 5 jobs concurrentes
@@ -131,7 +132,7 @@ export class JobService {
   async cancelJob(jobId: string): Promise<boolean> {
     try {
       const numRemoved = await this.agenda.cancel({ _id: jobId });
-      return numRemoved > 0;
+      return (numRemoved || 0) > 0;
     } catch (error) {
       console.error(`❌ Failed to cancel job ${jobId}:`, error);
       return false;
@@ -141,7 +142,13 @@ export class JobService {
   // Obtener estadísticas de jobs
   async getJobStats(): Promise<any> {
     try {
-      const stats = await this.agenda.db.collection('jobs').aggregate([
+      // Using agenda's internal _collection property to access MongoDB collection
+      const collection = (this.agenda as any)._collection;
+      if (!collection) {
+        throw new Error('Database collection not available');
+      }
+      
+      const stats = await collection.aggregate([
         {
           $group: {
             _id: '$name',
@@ -198,7 +205,7 @@ export class JobService {
   // Definir todos los jobs
   private defineJobs(): void {
     // Job para enviar emails
-    this.agenda.define(JobTypes.SEND_EMAIL, async (job) => {
+    this.agenda.define(JobTypes.SEND_EMAIL, async (job: Job) => {
       const { to, subject, body, correlationId } = job.attrs.data;
       const startTime = Date.now();
       
@@ -227,7 +234,7 @@ export class JobService {
     });
 
     // Job para procesar imágenes
-    this.agenda.define(JobTypes.PROCESS_IMAGE, async (job) => {
+    this.agenda.define(JobTypes.PROCESS_IMAGE, async (job: Job) => {
       const { imageUrl, operations, correlationId } = job.attrs.data;
       const startTime = Date.now();
       
@@ -256,7 +263,7 @@ export class JobService {
     });
 
     // Job para limpiar archivos temporales
-    this.agenda.define(JobTypes.CLEANUP_TEMP_FILES, async (job) => {
+    this.agenda.define(JobTypes.CLEANUP_TEMP_FILES, async (job: Job) => {
       const startTime = Date.now();
       
       try {
@@ -284,7 +291,7 @@ export class JobService {
     });
 
     // Job para generar reportes
-    this.agenda.define(JobTypes.GENERATE_REPORT, async (job) => {
+    this.agenda.define(JobTypes.GENERATE_REPORT, async (job: Job) => {
       const { reportType, filters, userId, correlationId } = job.attrs.data;
       const startTime = Date.now();
       
@@ -315,7 +322,7 @@ export class JobService {
     });
 
     // Job para sincronizar base de datos
-    this.agenda.define(JobTypes.SYNC_DATABASE, async (job) => {
+    this.agenda.define(JobTypes.SYNC_DATABASE, async (job: Job) => {
       const startTime = Date.now();
       
       try {
@@ -341,7 +348,7 @@ export class JobService {
     });
 
     // Job para enviar notificaciones
-    this.agenda.define(JobTypes.SEND_NOTIFICATION, async (job) => {
+    this.agenda.define(JobTypes.SEND_NOTIFICATION, async (job: Job) => {
       const { userId, message, type, correlationId } = job.attrs.data;
       const startTime = Date.now();
       
@@ -384,5 +391,41 @@ export class JobService {
   }
 }
 
-// Instancia global del servicio
-export const jobService = new JobService();
+// Instancia global del servicio (lazy initialization)
+let _jobService: JobService | null = null;
+
+export const jobService = {
+  async initialize() {
+    if (!_jobService) {
+      _jobService = new JobService();
+    }
+    return _jobService.initialize();
+  },
+  
+  async shutdown() {
+    if (_jobService) {
+      return _jobService.shutdown();
+    }
+  },
+  
+  async scheduleJob(jobType: JobTypes, data: JobData, options?: JobOptions) {
+    if (!_jobService) {
+      throw new Error('JobService not initialized');
+    }
+    return _jobService.scheduleJob(jobType, data, options);
+  },
+  
+  async cancelJob(jobId: string) {
+    if (!_jobService) {
+      throw new Error('JobService not initialized');
+    }
+    return _jobService.cancelJob(jobId);
+  },
+  
+  async getJobStats() {
+    if (!_jobService) {
+      throw new Error('JobService not initialized');
+    }
+    return _jobService.getJobStats();
+  }
+};

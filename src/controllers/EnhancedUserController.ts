@@ -17,7 +17,7 @@ export class EnhancedUserController {
   private userRepository: UserRepository;
 
   constructor() {
-    this.userRepository = container.get<UserRepository>('UserRepository');
+    this.userRepository = container.getUserRepository();
   }
 
   // GET /users - Listar usuarios con paginación, filtros y ordenamiento

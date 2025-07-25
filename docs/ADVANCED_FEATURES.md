@@ -81,7 +81,7 @@ La API automáticamente agrega estos headers a todas las respuestas:
 ### Uso
 Puedes enviar tu propio correlation ID:
 ```bash
-curl -H "X-Correlation-ID: my-custom-id" http://localhost:3000/users
+curl -H "X-Correlation-ID: my-custom-id" http://localhost:4000/users
 ```
 
 ### Logs Estructurados
@@ -101,22 +101,22 @@ Sistema de versionado flexible que soporta múltiples métodos de especificació
 
 #### 1. Header Accept-Version (Recomendado)
 ```bash
-curl -H "Accept-Version: v1" http://localhost:3000/users
+curl -H "Accept-Version: v1" http://localhost:4000/users
 ```
 
 #### 2. Header API-Version
 ```bash
-curl -H "API-Version: v1" http://localhost:3000/users
+curl -H "API-Version: v1" http://localhost:4000/users
 ```
 
 #### 3. URL Path
 ```bash
-curl http://localhost:3000/v1/users
+curl http://localhost:4000/v1/users
 ```
 
 #### 4. Query Parameter
 ```bash
-curl http://localhost:3000/users?version=v1
+curl http://localhost:4000/users?version=v1
 ```
 
 ### Versiones Soportadas
@@ -296,7 +296,7 @@ Sistema estandarizado de paginación con filtros avanzados y ordenamiento.
 
 ### Ejemplo de Request
 ```bash
-curl "http://localhost:3000/users?page=2&limit=5&sortBy=createdAt&sortOrder=desc&search=john&role=user"
+curl "http://localhost:4000/users?page=2&limit=5&sortBy=createdAt&sortOrder=desc&search=john&role=user"
 ```
 
 ### Ejemplo de Respuesta Paginada
@@ -404,13 +404,13 @@ grep "correlation-id-here" logs/*.log
 ### Performance Issues
 Revisar métricas de slow requests:
 ```bash
-curl -H "Authorization: Bearer $TOKEN" http://localhost:3000/metrics/slow
+curl -H "Authorization: Bearer $TOKEN" http://localhost:4000/metrics/slow
 ```
 
 ### Jobs Fallidos
 Revisar estadísticas de jobs:
 ```bash
-curl -H "Authorization: Bearer $TOKEN" http://localhost:3000/jobs/stats
+curl -H "Authorization: Bearer $TOKEN" http://localhost:4000/jobs/stats
 ```
 
 ### Validación de DTOs

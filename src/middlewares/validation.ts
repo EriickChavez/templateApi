@@ -60,13 +60,15 @@ export class ValidationHelper {
   ): Promise<{ isValid: boolean; validatedData?: T; errors?: FormattedValidationError[] }> {
     try {
       // Transformar plain object a instancia de clase con validaciones
-      const dto = plainToClass(DtoClass, data);
+      const dto = plainToClass(DtoClass, data, {
+        enableImplicitConversion: true, // Permite conversiones automáticas de tipos
+        excludeExtraneousValues: true // Excluye propiedades no definidas en el DTO
+      });
       
       // Ejecutar validaciones
       const validationErrors = await validate(dto, {
         whitelist: true, // Solo propiedades definidas en el DTO
         forbidNonWhitelisted: true, // Rechazar propiedades no definidas
-        transform: true, // Aplicar transformaciones automáticamente
         validationError: { 
           target: false, // No incluir el objeto completo en errores
           value: false // No incluir valores en errores sensibles

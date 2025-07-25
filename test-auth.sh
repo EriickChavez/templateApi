@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # Script de prueba para el sistema de autenticación basado en roles
-# Asegúrate de que el servidor esté corriendo en el puerto 3000
+# Asegúrate de que el servidor esté corriendo en el puerto 4000
 
-BASE_URL="http://localhost:3000"
+BASE_URL="http://localhost:4000"
 ADMIN_TOKEN=""
 USER_TOKEN=""
 

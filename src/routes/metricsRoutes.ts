@@ -1,14 +1,13 @@
 import { Router } from 'express';
 import { metricsEndpoints } from '../middlewares/performance';
 import { authenticateToken } from '../middlewares/auth';
-import { requireRole } from '../middlewares/roleBasedAccess';
-import { UserRole } from '../dto/UserDto';
+import { requireAccess, AccessRules } from '../middlewares/roleBasedAccess';
 
 const router = Router();
 
 // Todas las rutas de métricas requieren autenticación y rol de admin
 router.use(authenticateToken);
-router.use(requireRole([UserRole.ADMIN]));
+router.use(requireAccess(AccessRules.adminOnly()));
 
 // GET /metrics - Estadísticas generales de performance
 router.get('/', metricsEndpoints.getStats);

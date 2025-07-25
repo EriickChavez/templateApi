@@ -9,7 +9,7 @@ Esta guía te muestra cómo usar el sistema de autenticación con roles implemen
 npm run dev
 ```
 
-2. **El servidor correrá en:** `http://localhost:3000`
+2. **El servidor correrá en:** `http://localhost:4000`
 
 ## 📋 Roles disponibles
 
@@ -21,7 +21,7 @@ npm run dev
 ## 🔑 1. Registro de usuario
 
 ```bash
-curl -X POST http://localhost:3000/auth/register \
+curl -X POST http://localhost:4000/auth/register \
   -H "Content-Type: application/json" \
   -d '{
     "email": "admin@example.com",
@@ -53,7 +53,7 @@ curl -X POST http://localhost:3000/auth/register \
 ## 🔓 2. Login
 
 ```bash
-curl -X POST http://localhost:3000/auth/login \
+curl -X POST http://localhost:4000/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "email": "admin@example.com",
@@ -84,14 +84,14 @@ curl -X POST http://localhost:3000/auth/login \
 ## 👤 3. Obtener información del usuario actual
 
 ```bash
-curl -X GET http://localhost:3000/auth/me \
+curl -X GET http://localhost:4000/auth/me \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 ```
 
 ## 🔄 4. Renovar token
 
 ```bash
-curl -X POST http://localhost:3000/auth/refresh \
+curl -X POST http://localhost:4000/auth/refresh \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 ```
 
@@ -101,7 +101,7 @@ curl -X POST http://localhost:3000/auth/refresh \
 
 ```bash
 # Esta ruta fallará con "user" role
-curl -X GET http://localhost:3000/auth/admin-only \
+curl -X GET http://localhost:4000/auth/admin-only \
   -H "Authorization: Bearer <tu-token>"
 ```
 
@@ -116,14 +116,14 @@ curl -X GET http://localhost:3000/auth/admin-only \
 ### 👮‍♂️ Para Administradores y Moderadores
 
 ```bash
-curl -X GET http://localhost:3000/auth/moderator-area \
+curl -X GET http://localhost:4000/auth/moderator-area \
   -H "Authorization: Bearer <tu-token>"
 ```
 
 ### 👤 Para usuarios registrados (USER, MODERATOR, ADMIN)
 
 ```bash
-curl -X GET http://localhost:3000/auth/user-area \
+curl -X GET http://localhost:4000/auth/user-area \
   -H "Authorization: Bearer <tu-token>"
 ```
 
@@ -131,17 +131,17 @@ curl -X GET http://localhost:3000/auth/user-area \
 
 ```bash
 # Sin token
-curl -X GET http://localhost:3000/auth/public-with-optional-user
+curl -X GET http://localhost:4000/auth/public-with-optional-user
 
 # Con token (mostrará información adicional)
-curl -X GET http://localhost:3000/auth/public-with-optional-user \
+curl -X GET http://localhost:4000/auth/public-with-optional-user \
   -H "Authorization: Bearer <tu-token>"
 ```
 
 ### 🎬 Demo de roles
 
 ```bash
-curl -X GET http://localhost:3000/auth/role-demo \
+curl -X GET http://localhost:4000/auth/role-demo \
   -H "Authorization: Bearer <tu-token>"
 ```
 
@@ -149,29 +149,29 @@ curl -X GET http://localhost:3000/auth/role-demo \
 
 ### Crear usuarios de demo
 ```bash
-curl -X POST http://localhost:3000/users/demo
+curl -X POST http://localhost:4000/users/demo
 ```
 
 ### Ver estadísticas (público)
 ```bash
-curl -X GET http://localhost:3000/users/stats
+curl -X GET http://localhost:4000/users/stats
 ```
 
 ### Listar usuarios (Solo Admin/Moderador)
 ```bash
-curl -X GET http://localhost:3000/users \
+curl -X GET http://localhost:4000/users \
   -H "Authorization: Bearer <admin-token>"
 ```
 
 ### Ver un usuario específico (Solo el propio usuario o Admin)
 ```bash
-curl -X GET http://localhost:3000/users/user-id-123 \
+curl -X GET http://localhost:4000/users/user-id-123 \
   -H "Authorization: Bearer <tu-token>"
 ```
 
 ### Cambiar rol de usuario (Solo Admin)
 ```bash
-curl -X PUT http://localhost:3000/users/user-id-123/role \
+curl -X PUT http://localhost:4000/users/user-id-123/role \
   -H "Authorization: Bearer <admin-token>" \
   -H "Content-Type: application/json" \
   -d '{"role": "admin"}'
@@ -181,12 +181,12 @@ curl -X PUT http://localhost:3000/users/user-id-123/role \
 
 ### Paso 1: Crear usuarios de demo
 ```bash
-curl -X POST http://localhost:3000/users/demo
+curl -X POST http://localhost:4000/users/demo
 ```
 
 ### Paso 2: Registrar un nuevo usuario
 ```bash
-curl -X POST http://localhost:3000/auth/register \
+curl -X POST http://localhost:4000/auth/register \
   -H "Content-Type: application/json" \
   -d '{
     "email": "test@example.com",
@@ -199,7 +199,7 @@ curl -X POST http://localhost:3000/auth/register \
 ### Paso 3: Hacer login y guardar el token
 ```bash
 # Guarda la respuesta para obtener el token
-curl -X POST http://localhost:3000/auth/login \
+curl -X POST http://localhost:4000/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "email": "test@example.com",
@@ -210,11 +210,11 @@ curl -X POST http://localhost:3000/auth/login \
 ### Paso 4: Probar rutas por roles
 ```bash
 # ✅ Esto funcionará (cualquier usuario autenticado)
-curl -X GET http://localhost:3000/auth/user-area \
+curl -X GET http://localhost:4000/auth/user-area \
   -H "Authorization: Bearer <tu-token>"
 
 # ❌ Esto fallará (solo admins)
-curl -X GET http://localhost:3000/auth/admin-only \
+curl -X GET http://localhost:4000/auth/admin-only \
   -H "Authorization: Bearer <tu-token>"
 ```
 

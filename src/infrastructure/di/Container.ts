@@ -1,10 +1,6 @@
 import { config } from '../../config/env';
 import { UserRepository } from '../../domain/repositories/UserRepository';
-import { MongoUserRepository } from '../repositories/MongoUserRepository';
-import { MySQLUserRepository } from '../repositories/MySQLUserRepository';
 import { InMemoryUserRepository } from '../repositories/InMemoryUserRepository';
-import { connectMongoDB, mongoConnection } from '../database/mongodb/connection';
-import { connectMySQL, mysqlConnection } from '../database/mysql/connection';
 
 export class DIContainer {
   private static instance: DIContainer;
@@ -59,7 +55,10 @@ export class DIContainer {
     if (databaseUrl.startsWith('mongodb://') || databaseUrl.startsWith('mongodb+srv://')) {
       console.log('🍃 Configurando MongoDB...');
       try {
+        const { connectMongoDB } = await import('../database/mongodb/connection');
         await connectMongoDB();
+        
+        const { MongoUserRepository } = await import('../repositories/MongoUserRepository');
         this.userRepository = new MongoUserRepository();
         console.log('✅ MongoDB configurado exitosamente');
       } catch (error) {
@@ -71,7 +70,10 @@ export class DIContainer {
     else if (databaseUrl.startsWith('mysql://')) {
       console.log('🐬 Configurando MySQL...');
       try {
+        const { connectMySQL } = await import('../database/mysql/connection');
         await connectMySQL();
+        
+        const { MySQLUserRepository } = await import('../repositories/MySQLUserRepository');
         this.userRepository = new MySQLUserRepository();
         console.log('✅ MySQL configurado exitosamente');
       } catch (error) {
@@ -99,7 +101,7 @@ export class DIContainer {
   /**
    * Obtiene estadísticas de conexión
    */
-  public getConnectionStats() {
+  public async getConnectionStats() {
     const stats: any = {
       isInitialized: this.isInitialized,
       repository: this.userRepository?.constructor.name || 'None',
@@ -107,13 +109,23 @@ export class DIContainer {
     };
 
     // Agregar estadísticas específicas de MongoDB
-    if (this.userRepository instanceof MongoUserRepository) {
-      stats.mongodb = mongoConnection.getConnectionStats();
+    if (this.userRepository?.constructor.name === 'MongoUserRepository') {
+      try {
+        const { mongoConnection } = await import('../database/mongodb/connection');
+        stats.mongodb = mongoConnection.getConnectionStats();
+      } catch (error) {
+        stats.mongodb = { error: 'Failed to get MongoDB stats' };
+      }
     }
 
     // Agregar estadísticas específicas de MySQL
-    if (this.userRepository instanceof MySQLUserRepository) {
-      stats.mysql = mysqlConnection.getConnectionStats();
+    if (this.userRepository?.constructor.name === 'MySQLUserRepository') {
+      try {
+        const { mysqlConnection } = await import('../database/mysql/connection');
+        stats.mysql = mysqlConnection.getConnectionStats();
+      } catch (error) {
+        stats.mysql = { error: 'Failed to get MySQL stats' };
+      }
     }
 
     return stats;
@@ -128,18 +140,22 @@ export class DIContainer {
     }
 
     try {
+      const repositoryName = this.userRepository.constructor.name;
+      
       // Para repositorios en memoria, siempre es saludable
-      if (this.userRepository instanceof InMemoryUserRepository) {
+      if (repositoryName === 'InMemoryUserRepository') {
         return true;
       }
 
       // Para MongoDB
-      if (this.userRepository instanceof MongoUserRepository) {
+      if (repositoryName === 'MongoUserRepository') {
+        const { mongoConnection } = await import('../database/mongodb/connection');
         return await mongoConnection.healthCheck();
       }
 
       // Para MySQL
-      if (this.userRepository instanceof MySQLUserRepository) {
+      if (repositoryName === 'MySQLUserRepository') {
+        const { mysqlConnection } = await import('../database/mysql/connection');
         return await mysqlConnection.healthCheck();
       }
 
@@ -158,17 +174,29 @@ export class DIContainer {
       return;
     }
 
-    console.log('🧹 Limpiando conexiones...');
+    console.log('🧽 Limpiando conexiones...');
 
     try {
+      const repositoryName = this.userRepository?.constructor.name;
+      
       // Cerrar MongoDB si está conectado
-      if (this.userRepository instanceof MongoUserRepository) {
-        await mongoConnection.disconnect();
+      if (repositoryName === 'MongoUserRepository') {
+        try {
+          const { mongoConnection } = await import('../database/mongodb/connection');
+          await mongoConnection.disconnect();
+        } catch (error) {
+          console.warn('⚠️ Error cerrando MongoDB:', error);
+        }
       }
 
       // Cerrar MySQL si está conectado
-      if (this.userRepository instanceof MySQLUserRepository) {
-        await mysqlConnection.disconnect();
+      if (repositoryName === 'MySQLUserRepository') {
+        try {
+          const { mysqlConnection } = await import('../database/mysql/connection');
+          await mysqlConnection.disconnect();
+        } catch (error) {
+          console.warn('⚠️ Error cerrando MySQL:', error);
+        }
       }
 
       this.userRepository = null;

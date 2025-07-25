@@ -21,7 +21,10 @@ class MongoDBConnection {
     }
 
     try {
-      const mongoUri = config.DATABASE_URL || 'mongodb://localhost:27017/templateapi';
+      if (!config.DATABASE_URL) {
+        throw new Error('DATABASE_URL no está configurada para MongoDB');
+      }
+      const mongoUri = config.DATABASE_URL;
       
       // Configuraciones de conexión simplificadas
       const options = {

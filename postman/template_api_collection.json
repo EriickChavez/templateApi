@@ -477,7 +477,7 @@
         "exec": [
           "// Configurar variables base si no existen",
           "if (!pm.environment.get('baseUrl')) {",
-          "    pm.environment.set('baseUrl', 'http://localhost:3000');",
+          "    pm.environment.set('baseUrl', 'http://localhost:4000');",
           "}",
           "",
           "// Log para debugging",
@@ -502,7 +502,7 @@
   "variable": [
     {
       "key": "baseUrl",
-      "value": "http://localhost:3000",
+      "value": "http://localhost:4000",
       "type": "string"
     },
     {

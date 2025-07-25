@@ -5,7 +5,7 @@ Esta guía contiene todos los comandos curl para interactuar con la Template API
 ## 📋 Requisitos Previos
 
 1. **Servidor corriendo**: `npm run dev`
-2. **Base URL**: `http://localhost:3000` (o tu configuración)
+2. **Base URL**: `http://localhost:4000` (o tu configuración)
 3. **Content-Type**: Siempre usar `application/json` para POST/PUT
 4. **Token**: Necesario para endpoints protegidos
 5. **jq**: Recomendado para formatear respuestas JSON (`brew install jq`)
@@ -28,7 +28,7 @@ node create-admin.js
 
 ### 2. Variables de entorno (opcional)
 ```bash
-export BASE_URL="http://localhost:3000"
+export BASE_URL="http://localhost:4000"
 export TOKEN=""  # Se llenará después del login
 ```
 
@@ -40,14 +40,14 @@ export TOKEN=""  # Se llenará después del login
 ```bash
 curl -X GET {{BASE_URL}}/
 # o
-curl -X GET http://localhost:3000/
+curl -X GET http://localhost:4000/
 ```
 
 ### Saludo Personalizado
 ```bash
 curl -X GET {{BASE_URL}}/saludo/Erick
 # o
-curl -X GET http://localhost:3000/saludo/TuNombre
+curl -X GET http://localhost:4000/saludo/TuNombre
 ```
 
 ### Health Check
@@ -516,7 +516,7 @@ curl -X POST {{BASE_URL}}/db/container/restart \
 #!/bin/bash
 
 # Configuración
-BASE_URL="http://localhost:3000"
+BASE_URL="http://localhost:4000"
 
 echo "🚀 Configurando Template API..."
 
@@ -564,7 +564,7 @@ fi
 ```bash
 #!/bin/bash
 
-BASE_URL="http://localhost:3000"
+BASE_URL="http://localhost:4000"
 
 echo "🧪 Testing todos los endpoints..."
 
@@ -657,7 +657,7 @@ curl -L -X GET {{BASE_URL}}/some-endpoint
 ### Error: Connection refused
 ```bash
 # Verificar que el servidor esté corriendo
-curl -I http://localhost:3000
+curl -I http://localhost:4000
 # Si falla, ejecutar: npm run dev
 ```
 
@@ -680,13 +680,13 @@ echo '{"email":"test@test.com","password":"123"}' | jq '.'
 ping localhost
 
 # 2. Verificar puerto
-netstat -an | grep 3000
+netstat -an | grep 4000
 
 # 3. Verificar logs del servidor
 # (Ver la consola donde corre npm run dev)
 
 # 4. Test básico
-curl -v http://localhost:3000/
+curl -v http://localhost:4000/
 ```
 
 ---
@@ -698,7 +698,7 @@ curl -v http://localhost:3000/
 #!/bin/bash
 set -e
 
-BASE_URL="http://localhost:3000"
+BASE_URL="http://localhost:4000"
 
 echo "🔧 SETUP COMPLETO CON NUEVAS FUNCIONALIDADES"
 echo "============================================="
@@ -784,7 +784,7 @@ echo "\n✅ Workflow completo ejecutado exitosamente!"
 ```bash
 #!/bin/bash
 
-BASE_URL="http://localhost:3000"
+BASE_URL="http://localhost:4000"
 TOKEN=$(curl -s -X POST $BASE_URL/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"admin@templateapi.com","password":"MiPassword123!"}' | jq -r '.data.token')
@@ -828,7 +828,7 @@ echo "\n✅ Pruebas de validación completadas!"
 ```bash
 #!/bin/bash
 
-BASE_URL="http://localhost:3000"
+BASE_URL="http://localhost:4000"
 TOKEN=$(curl -s -X POST $BASE_URL/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"admin@templateapi.com","password":"MiPassword123!"}' | jq -r '.data.token')
@@ -877,7 +877,7 @@ echo "\n✅ Monitoreo completado!"
 ```bash
 #!/bin/bash
 
-BASE_URL="http://localhost:3000"
+BASE_URL="http://localhost:4000"
 TOKEN=$(curl -s -X POST $BASE_URL/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"admin@templateapi.com","password":"MiPassword123!"}' | jq -r '.data.token')

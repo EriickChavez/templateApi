@@ -89,11 +89,8 @@ export const tracingMiddleware = (req: Request, res: Response, next: NextFunctio
 // Utility function para obtener tracing info en cualquier parte de la app
 export const getTracingInfo = (req: Request) => {
   return {
-    correlationId: req.correlationId,
-    requestId: req.requestId,
-    startTime: req.startTime,
-    duration: Date.now() - req.startTime,
-    ...req.tracing
+    ...req.tracing,
+    duration: Date.now() - req.startTime
   };
 };
 

@@ -3,7 +3,7 @@
 echo "🧪 PRUEBA RÁPIDA DEL SISTEMA DE AUTENTICACIÓN"
 echo "=============================================="
 
-BASE_URL="http://localhost:3000"
+BASE_URL="http://localhost:4000"
 
 echo ""
 echo "1️⃣ Registrando primer usuario (será ADMIN automáticamente)..."

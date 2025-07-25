@@ -17,7 +17,6 @@ import { sanitizeInput } from './middlewares/validators';
 import { tracingMiddleware } from './middlewares/tracing';
 import { performanceMiddleware } from './middlewares/performance';
 import { versioningMiddleware, versionResponseTransform } from './middlewares/versioning';
-import { jobService } from './services/JobService';
 
 const app = express();
 const PORT = config.PORT;
@@ -37,6 +36,7 @@ const PORT = config.PORT;
     // Inicializar servicio de jobs (solo si hay DATABASE_URL)
     if (config.DATABASE_URL) {
       try {
+        const { jobService } = await import('./services/JobService');
         await jobService.initialize();
         console.log('✅ Job Service initialized');
       } catch (error) {
@@ -151,8 +151,13 @@ const gracefulShutdown = async (signal: string) => {
     try {
       // Limpiar servicio de jobs
       if (config.DATABASE_URL) {
-        await jobService.shutdown();
-        console.log('🔌 Job Service shut down');
+        try {
+          const { jobService } = await import('./services/JobService');
+          await jobService.shutdown();
+          console.log('🔌 Job Service shut down');
+        } catch (error) {
+          console.warn('⚠️ Job Service cleanup failed:', error);
+        }
       }
       
       // Limpiar conexiones de base de datos
