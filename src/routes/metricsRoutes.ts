@@ -21,4 +21,10 @@ router.get('/recent', metricsEndpoints.getRecentMetrics);
 // GET /metrics/health - Health check avanzado con métricas
 router.get('/health', metricsEndpoints.getHealthWithMetrics);
 
+// GET /metrics/performance - Detalles de performance
+router.get('/performance', metricsEndpoints.getPerformanceDetails);
+
+// GET /metrics/system - Información del sistema
+router.get('/system', metricsEndpoints.getSystemInfo);
+
 export default router;

@@ -183,6 +183,194 @@ export const metricsEndpoints = {
     });
   },
 
+  // GET /metrics/performance - performance detallada
+  getPerformanceDetails: async (req: Request, res: Response) => {
+    const minutes = parseInt(req.query.minutes as string) || 5;
+    const stats = performanceMonitor.getStats(minutes);
+    const recentMetrics = performanceMonitor.getMetrics(100);
+    const memUsage = process.memoryUsage();
+    const cpuUsage = process.cpuUsage();
+    
+    // Calcular estadísticas por método HTTP
+    const methodStats: { [key: string]: { count: number; avgTime: number } } = {};
+    recentMetrics.forEach(metric => {
+      if (!methodStats[metric.method]) {
+        methodStats[metric.method] = { count: 0, avgTime: 0 };
+      }
+      methodStats[metric.method].count++;
+      methodStats[metric.method].avgTime += metric.duration;
+    });
+    
+    // Calcular promedios
+    Object.keys(methodStats).forEach(method => {
+      methodStats[method].avgTime = Math.round(
+        methodStats[method].avgTime / methodStats[method].count
+      );
+    });
+    
+    // Top endpoints más lentos
+    const endpointStats: { [key: string]: { count: number; avgTime: number; maxTime: number } } = {};
+    recentMetrics.forEach(metric => {
+      const key = `${metric.method} ${metric.url}`;
+      if (!endpointStats[key]) {
+        endpointStats[key] = { count: 0, avgTime: 0, maxTime: 0 };
+      }
+      endpointStats[key].count++;
+      endpointStats[key].avgTime += metric.duration;
+      endpointStats[key].maxTime = Math.max(endpointStats[key].maxTime, metric.duration);
+    });
+    
+    // Calcular promedios y ordenar por tiempo de respuesta
+    const topSlowEndpoints = Object.entries(endpointStats)
+      .map(([endpoint, data]) => ({
+        endpoint,
+        count: data.count,
+        avgTime: Math.round(data.avgTime / data.count),
+        maxTime: data.maxTime
+      }))
+      .sort((a, b) => b.avgTime - a.avgTime)
+      .slice(0, 10);
+    
+    const detailedStats = {
+      overview: {
+        totalRequests: stats.totalRequests,
+        averageResponseTime: stats.averageResponseTime,
+        errorRate: stats.errorRate,
+        slowRequests: stats.slowRequests,
+        timeWindow: `${minutes} minutes`
+      },
+      memory: {
+        rss: Math.round(memUsage.rss / 1024 / 1024), // MB
+        heapUsed: Math.round(memUsage.heapUsed / 1024 / 1024), // MB
+        heapTotal: Math.round(memUsage.heapTotal / 1024 / 1024), // MB
+        external: Math.round(memUsage.external / 1024 / 1024), // MB
+        arrayBuffers: memUsage.arrayBuffers ? Math.round(memUsage.arrayBuffers / 1024 / 1024) : 0
+      },
+      cpu: {
+        user: Math.round(cpuUsage.user / 1000), // microseconds to milliseconds
+        system: Math.round(cpuUsage.system / 1000)
+      },
+      methodStats,
+      topSlowEndpoints,
+      thresholds: {
+        slowRequestThreshold: '1000ms',
+        errorRateWarning: '10%',
+        errorRateCritical: '25%'
+      }
+    };
+    
+    res.json({
+      success: true,
+      message: 'Detailed performance metrics retrieved',
+      data: detailedStats,
+      meta: {
+        correlationId: req.correlationId,
+        timestamp: new Date().toISOString(),
+        version: req.apiVersion
+      }
+    });
+  },
+
+  // GET /metrics/system - información detallada del sistema
+  getSystemInfo: async (req: Request, res: Response) => {
+    const uptime = process.uptime();
+    const memUsage = process.memoryUsage();
+    const cpuUsage = process.cpuUsage();
+    
+    // Formatear uptime de manera legible
+    const formatUptime = (seconds: number) => {
+      const days = Math.floor(seconds / 86400);
+      const hours = Math.floor((seconds % 86400) / 3600);
+      const minutes = Math.floor((seconds % 3600) / 60);
+      const secs = Math.floor(seconds % 60);
+      
+      let formatted = '';
+      if (days > 0) formatted += `${days}d `;
+      if (hours > 0) formatted += `${hours}h `;
+      if (minutes > 0) formatted += `${minutes}m `;
+      formatted += `${secs}s`;
+      
+      return formatted.trim();
+    };
+    
+    // Información del sistema operativo
+    const os = require('os');
+    
+    const systemInfo = {
+      runtime: {
+        node: {
+          version: process.version,
+          platform: process.platform,
+          arch: process.arch,
+          pid: process.pid,
+          uptime: formatUptime(uptime),
+          uptimeSeconds: Math.floor(uptime)
+        },
+        environment: process.env.NODE_ENV || 'development',
+        execPath: process.execPath
+      },
+      memory: {
+        process: {
+          rss: `${Math.round(memUsage.rss / 1024 / 1024)} MB`,
+          heapUsed: `${Math.round(memUsage.heapUsed / 1024 / 1024)} MB`,
+          heapTotal: `${Math.round(memUsage.heapTotal / 1024 / 1024)} MB`,
+          external: `${Math.round(memUsage.external / 1024 / 1024)} MB`,
+          arrayBuffers: memUsage.arrayBuffers ? `${Math.round(memUsage.arrayBuffers / 1024 / 1024)} MB` : '0 MB'
+        },
+        system: {
+          total: `${Math.round(os.totalmem() / 1024 / 1024 / 1024)} GB`,
+          free: `${Math.round(os.freemem() / 1024 / 1024 / 1024)} GB`,
+          used: `${Math.round((os.totalmem() - os.freemem()) / 1024 / 1024 / 1024)} GB`,
+          usagePercent: `${Math.round(((os.totalmem() - os.freemem()) / os.totalmem()) * 100)}%`
+        }
+      },
+      cpu: {
+        process: {
+          user: `${Math.round(cpuUsage.user / 1000)}ms`,
+          system: `${Math.round(cpuUsage.system / 1000)}ms`
+        },
+        system: {
+          cores: os.cpus().length,
+          model: os.cpus()[0]?.model || 'Unknown',
+          speed: `${os.cpus()[0]?.speed || 0} MHz`,
+          loadAverage: os.loadavg().map((load: number) => Math.round(load * 100) / 100)
+        }
+      },
+      os: {
+        type: os.type(),
+        release: os.release(),
+        hostname: os.hostname(),
+        uptime: formatUptime(os.uptime()),
+        networkInterfaces: Object.keys(os.networkInterfaces() || {})
+      },
+      limits: {
+        maxMemory: process.env.NODE_OPTIONS?.includes('--max-old-space-size') 
+          ? process.env.NODE_OPTIONS.match(/--max-old-space-size=(\d+)/)?.[1] + ' MB'
+          : 'Default (~1.4GB)',
+        fileDescriptors: 'N/A' // Podría implementarse en sistemas Unix
+      },
+      versions: {
+        node: process.version,
+        v8: process.versions.v8,
+        uv: process.versions.uv,
+        zlib: process.versions.zlib,
+        openssl: process.versions.openssl,
+        modules: process.versions.modules
+      }
+    };
+    
+    res.json({
+      success: true,
+      message: 'Detailed system information retrieved',
+      data: systemInfo,
+      meta: {
+        correlationId: req.correlationId,
+        timestamp: new Date().toISOString(),
+        version: req.apiVersion
+      }
+    });
+  },
+
   // GET /metrics/slow - requests más lentos
   getSlowRequests: async (req: Request, res: Response) => {
     const threshold = parseInt(req.query.threshold as string) || 1000;

@@ -178,11 +178,34 @@ src/
 
 ### Scripts Disponibles
 ```bash
-npm run dev      # Desarrollo con nodemon
-npm run build    # Compilar TypeScript
-npm run start    # Producción
-npm run test     # Tests (no implementado)
+npm run dev                    # Desarrollo con nodemon
+npm run build                  # Compilar TypeScript
+npm run start                  # Producción
+npm run test                   # Tests (no implementado)
+npm run generate:curl-guide    # Generar guía de cURL automáticamente
+npm run docs:update            # Actualizar documentación
 ```
+
+### 🤖 Automatización de Documentación
+
+La guía de cURL se genera **automáticamente** analizando el código fuente:
+
+```bash
+# Generar/actualizar la guía de cURL
+npm run generate:curl-guide
+```
+
+**¿Qué hace este script?**
+- 🔍 **Escanea** todos los archivos de rutas en `src/routes/`
+- 📊 **Detecta** 61+ endpoints automáticamente
+- 🏷️ **Categoriza** por funcionalidad y nivel de acceso
+- 📝 **Genera** comandos cURL completos con ejemplos
+- 🎯 **Incluye** headers y JSON de ejemplo
+- ⏰ **Actualiza** timestamp de generación
+
+**Salida**: [`docs/CURL_GUIDE.md`](docs/CURL_GUIDE.md) con todos los endpoints
+
+Ver [📖 Documentación de Scripts](scripts/README.md) para más detalles.
 
 ### Agregar Nuevo Endpoint
 1. **Crear controlador** en `src/controllers/`

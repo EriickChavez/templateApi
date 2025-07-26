@@ -150,6 +150,7 @@ curl -X GET http://localhost:4000/auth/role-demo \
 ### Crear usuarios de demo
 ```bash
 curl -X POST http://localhost:4000/users/demo
+  -H "Content-Type: application/json" \
 ```
 
 ### Ver estadísticas (público)
@@ -182,6 +183,7 @@ curl -X PUT http://localhost:4000/users/user-id-123/role \
 ### Paso 1: Crear usuarios de demo
 ```bash
 curl -X POST http://localhost:4000/users/demo
+  -H "Content-Type: application/json" \
 ```
 
 ### Paso 2: Registrar un nuevo usuario

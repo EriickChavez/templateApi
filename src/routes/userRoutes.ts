@@ -2,12 +2,12 @@ import { Router } from 'express';
 import { UserController } from '../controllers/UserController';
 import { UserDomainService } from '../domain/services/UserDomainService';
 import { InMemoryUserRepository } from '../infrastructure/repositories/InMemoryUserRepository';
-import { 
-  authenticateToken, 
-  requireAdmin, 
+import {
+  authenticateToken,
+  requireAdmin,
   requireAdminOrModerator,
   requireOwnership,
-  optionalAuth 
+  optionalAuth
 } from '../middlewares/auth';
 
 const router = Router();

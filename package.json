@@ -10,7 +10,10 @@
     "build": "tsc",
     "start": "node dist/app.js",
     "start:dev": "ts-node src/app.ts",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "generate:curl-guide": "node scripts/generate-curl-guide.js",
+    "docs:update": "npm run generate:curl-guide",
+    "postinstall": "npm run generate:curl-guide"
   },
   "repository": {
     "type": "git",
