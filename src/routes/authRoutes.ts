@@ -18,23 +18,88 @@ const authController = new AuthController();
 // ===== RUTAS PÚBLICAS (sin autenticación) =====
 
 /**
- * POST /auth/register
- * Registro de nuevos usuarios
+ * @swagger
+ * /auth/register:
+ *   post:
+ *     summary: Registro de nuevos usuarios
+ *     tags: [Autenticación]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/RegisterRequest'
+ *           example:
+ *             email: "usuario@example.com"
+ *             password: "Password123!"
+ *             firstName: "Juan"
+ *             lastName: "Pérez"
+ *     responses:
+ *       201:
+ *         description: Usuario registrado exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/AuthResponse'
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
  */
 router.post('/register', logAuthAttempt, authController.register);
 
 /**
- * POST /auth/login  
- * Login de usuarios
+ * @swagger
+ * /auth/login:
+ *   post:
+ *     summary: Login de usuarios
+ *     tags: [Autenticación]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/LoginRequest'
+ *           example:
+ *             email: "usuario@example.com"
+ *             password: "Password123!"
+ *     responses:
+ *       200:
+ *         description: Login exitoso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/AuthResponse'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
  */
 router.post('/login', logAuthAttempt, authController.login);
 
 // ===== RUTAS PROTEGIDAS (requieren autenticación) =====
 
 /**
- * GET /auth/me
- * Obtener información del usuario actual
- * Requiere: Usuario autenticado (cualquier rol)
+ * @swagger
+ * /auth/me:
+ *   get:
+ *     summary: Obtener información del usuario actual
+ *     tags: [Autenticación]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Información del usuario
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   $ref: '#/components/schemas/User'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
  */
 router.get('/me', authenticateToken, authController.me);
 

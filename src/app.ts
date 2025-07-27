@@ -13,6 +13,8 @@ import {
   removeUnnecessaryHeaders,
   securityLogger
 } from './middlewares/security';
+import { swaggerSpec, swaggerUiHandler } from './config/swagger';
+import swaggerUi from 'swagger-ui-express';
 import { sanitizeInput } from './middlewares/validators';
 import { tracingMiddleware } from './middlewares/tracing';
 import { performanceMiddleware } from './middlewares/performance';
@@ -79,6 +81,9 @@ app.use(sanitizeInput);
 // Middleware para transformar respuestas según versión
 app.use(versionResponseTransform);
 
+// Swagger UI
+app.use('/api-docs', swaggerUi.serve, swaggerUiHandler);
+
 // Rutas
 app.use('/', routes);
 
@@ -100,6 +105,7 @@ const server = app.listen(PORT, () => {
   console.log(`📋 Background Jobs: ${config.DATABASE_URL ? '✅ Activado' : '⚠️ Desactivado (sin DB)'}`);
   console.log(`🔢 API Versioning: ✅ Activado (v1 por defecto)`);
   console.log(`📝 DTOs y Validación: ✅ Activado`);
+  console.log(`📚 Swagger UI: ✅ Disponible en http://localhost:${PORT}/api-docs`);
   console.log(`📂 Logs de errores: ${config.NODE_ENV === 'production' ? '📝 Archivo' : '🖥️  Consola'}`);
   console.log(`\n📝 Endpoints disponibles:`);
   console.log(`\n🌍 RUTAS PÚBLICAS:`);

@@ -6,23 +6,65 @@ const router = Router();
 const appController = new AppController();
 
 /**
- * @route   GET /
- * @desc    Información básica de la aplicación
- * @access  Public
+ * @swagger
+ * /:
+ *   get:
+ *     summary: Información básica de la aplicación
+ *     tags: [App]
+ *     responses:
+ *       200:
+ *         description: Información general
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Hola Mundo desde la API"
  */
 router.get('/', appController.getAppInfo);
 
 /**
- * @route   GET /saludo/:nombre
- * @desc    Obtener saludo personalizado
- * @access  Public
+ * @swagger
+ * /saludo/{nombre}:
+ *   get:
+ *     summary: Obtener saludo personalizado
+ *     tags: [App]
+ *     parameters:
+ *       - name: nombre
+ *         in: path
+ *         required: true
+ *         description: Nombre a saludar
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Devuelve un saludo
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Hola, [nombre]!"
  */
 router.get('/saludo/:nombre', validateName, appController.getPersonalizedGreeting);
 
 /**
- * @route   GET /health
- * @desc    Estado de salud de la API
- * @access  Public
+ * @swagger
+ * /health:
+ *   get:
+ *     summary: Estado de salud de la API
+ *     tags: [App]
+ *     responses:
+ *       200:
+ *         description: Información de salud de la API
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/HealthResponse'
  */
 router.get('/health', appController.getHealthStatus);
 

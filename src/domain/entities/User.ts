@@ -42,7 +42,7 @@ export class User extends BaseEntity {
 
   constructor(props: UserProps, id?: string) {
     super(id);
-    
+
     this._email = props.email;
     this._name = props.name;
     this._role = props.role;
@@ -102,7 +102,7 @@ export class User extends BaseEntity {
   }
 
   // Métodos de negocio
-  
+
   /**
    * Actualiza el email del usuario
    */
