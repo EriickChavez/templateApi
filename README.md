@@ -21,7 +21,7 @@ Una API completa con autenticación JWT, control de roles y arquitectura hexagon
 
 ### 1. Instalación
 ```bash
-git clone <repo-url>
+git clone https://github.com/EriickChavez/templateApi.git
 cd templateApi
 npm install
 ```
