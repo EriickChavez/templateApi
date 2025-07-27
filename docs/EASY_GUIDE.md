@@ -82,6 +82,81 @@ const calculadora = container.getCalculadora();
 console.log(calculadora.sumar(2, 3)); // Esto mostrará 5
 ```
 
+## Agregar Documentación Swagger
+
+### Para que tu endpoint aparezca en la documentación:
+```typescript
+/**
+ * @swagger
+ * /mi-endpoint:
+ *   get:
+ *     summary: Descripción de mi endpoint
+ *     tags: [Mi Categoría]
+ *     responses:
+ *       200:
+ *         description: Respuesta exitosa
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ */
+router.get('/mi-endpoint', (req, res) => {
+  res.json({ message: 'Mi respuesta' });
+});
+```
+
+## Agregar Sanitización a tu endpoint
+
+### Para proteger contra ataques:
+```typescript
+import { sanitizationPresets } from '../middlewares/advancedSanitization';
+
+// Usar preset existente
+router.post('/mi-endpoint', sanitizationPresets.auth, miControlador.crear);
+
+// O crear tu propia sanitización
+router.post('/mi-endpoint', routeSpecificSanitization({
+  body: {
+    nombre: 'name',
+    email: 'email',
+    contenido: 'text'
+  }
+}), miControlador.crear);
+```
+
+## Agregar Búsqueda a tus datos
+
+### Cómo hacer que tu contenido sea buscable:
+```typescript
+import { searchWithElasticsearch, searchWithFuse } from '../services/searchService';
+import { isElasticsearchConnected } from '../config/elasticsearch';
+
+export class MiController {
+  async buscar(req: Request, res: Response) {
+    const { query, filters } = req.query;
+    
+    let resultados = [];
+    
+    if (isElasticsearchConnected()) {
+      // Buscar en Elasticsearch
+      resultados = await searchWithElasticsearch('mi-indice', query, filters);
+    } else {
+      // Buscar en memoria
+      const misDatos = await this.obtenerDatos();
+      resultados = searchWithFuse(misDatos, query, filters);
+    }
+    
+    res.json({ success: true, data: resultados });
+  }
+}
+```
+
 ### Y eso es todo, amigo! 🎉
 - Has creado un nuevo endpoint y entendido cómo usar la inyección de dependencias.
-- ¡Ahora estás listo para construir cosas increíbles!
+- Has agregado documentación Swagger para que otros puedan usar tu API fácilmente.
+- Has protegido tu endpoint contra ataques con sanitización avanzada.
+- Has hecho tu contenido buscable con el sistema de búsqueda integrado.
+- ¡Ahora estás listo para construir cosas increíbles y seguras!

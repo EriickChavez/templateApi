@@ -13,6 +13,9 @@ Una API completa con autenticación JWT, control de roles y arquitectura hexagon
 - 🧪 **Repositorio en Memoria** para desarrollo rápido
 - 📝 **Documentación completa** con ejemplos curl
 - 🎯 **Colección Postman** incluida
+- 📚 **Documentación Swagger/OpenAPI** interactiva
+- 🧼 **Sanitización Avanzada** (XSS, SQL/NoSQL Injection, Path Traversal)
+- 🔍 **Búsqueda y Filtrado** con Elasticsearch + Fuse.js
 
 ## 🚀 Quick Start
 
@@ -54,9 +57,10 @@ npm run dev
 
 | Documento | Descripción |
 |-----------|-----------|
-| [📖 Guía cURL](docs/CURL_GUIDE.md) | Comandos curl para todos los endpoints |
+| [📜 Guía cURL](docs/CURL_GUIDE.md) | Comandos curl para todos los endpoints |
 | [🏗️ Inyección de Dependencias](docs/DEPENDENCY_INJECTION.md) | Sistema DI y configuración de BD |
 | [📋 Guía Fácil](docs/EASY_GUIDE.md) | Cómo agregar endpoints nuevos |
+| [🛡️ Características Avanzadas](docs/ADVANCED_SECURITY_SEARCH.md) | Sanitización, Búsqueda y Swagger |
 | [📬 Postman Collection](postman/template_api_collection.json) | Colección completa para Postman |
 
 ## 🌍 Endpoints Principales
@@ -92,6 +96,19 @@ GET  /db/users      - Listar usuarios
 GET  /users         - Listar usuarios
 POST /users         - Crear usuario (Admin)
 GET  /users/:id     - Ver usuario
+```
+
+### Búsqueda y Filtrado
+```
+GET  /search/content    - Búsqueda de contenido con full-text
+GET  /search/users      - Búsqueda de usuarios
+GET  /search/suggest    - Sugerencias automáticas
+GET  /search/facets     - Facetas para filtrado avanzado
+```
+
+### Documentación
+```
+GET  /api-docs          - Swagger UI interactivo
 ```
 
 ## 🗄️ Bases de Datos Soportadas
@@ -214,6 +231,78 @@ Ver [📖 Documentación de Scripts](scripts/README.md) para más detalles.
 4. **Actualizar documentación**
 
 Ver [📋 Guía Fácil](docs/EASY_GUIDE.md) para detalles.
+
+## 🔍 Búsqueda y Filtrado
+
+### Características
+- **Full-text search** con Elasticsearch (opcional)
+- **Fallback** a Fuse.js para búsqueda en memoria
+- **Filtros avanzados** con JSON dinámico
+- **Sugerencias automáticas** de búsqueda
+- **Facetas** para filtrado por categorías
+- **Ordenamiento** por cualquier campo
+
+### Configuración de Elasticsearch (Opcional)
+```bash
+# En tu archivo .env
+ELASTICSEARCH_URL=http://localhost:9200
+ELASTICSEARCH_AUTH=true
+ELASTICSEARCH_USERNAME=elastic
+ELASTICSEARCH_PASSWORD=changeme
+```
+
+### Ejemplos de Uso
+```bash
+# Búsqueda básica
+curl "http://localhost:4000/search/content?query=javascript"
+
+# Búsqueda con filtros
+curl "http://localhost:4000/search/content?query=tutorial&filters={\"category\":\"programming\"}&sort=createdAt"
+
+# Sugerencias
+curl "http://localhost:4000/search/suggest?q=java&type=content"
+
+# Obtener facetas
+curl "http://localhost:4000/search/facets?index=content"
+```
+
+## 📚 Documentación Swagger
+
+La API incluye documentación interactiva completa:
+
+- **URL**: `http://localhost:4000/api-docs`
+- **Características**:
+  - Interfaz interactiva para probar endpoints
+  - Esquemas de datos completos
+  - Ejemplos de request/response
+  - Autenticación JWT integrada
+  - Documentación de errores
+
+### Usar Swagger UI
+1. Abre `http://localhost:4000/api-docs`
+2. Expande cualquier endpoint para ver detalles
+3. Usa "Try it out" para probar directamente
+4. Para endpoints protegidos, haz clic en "Authorize" e ingresa tu JWT token
+
+## 🧼 Sanitización Avanzada
+
+### Protecciones Implementadas
+- **XSS** (Cross-Site Scripting)
+- **SQL Injection** y **NoSQL Injection**
+- **Path Traversal** attacks
+- **JavaScript Injection**
+- **Null Byte** attacks
+- **HTTP Parameter Pollution**
+- **Payload size** limits
+
+### Configuración por Contexto
+```typescript
+// Niveles de sanitización disponibles
+STRICT     // Máxima seguridad, caracteres limitados
+MODERATE   // Balance entre seguridad y funcionalidad
+BASIC      // Sanitización básica
+HTML_SAFE  // Permite HTML seguro con DOMPurify
+```
 
 ## 📊 Monitoreo
 

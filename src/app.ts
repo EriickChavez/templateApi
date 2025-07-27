@@ -5,6 +5,7 @@ import { config } from './config/env';
 import routes from './routes';
 import { errorHandler, notFoundHandler, initErrorSystem, globalErrorCatcher } from './middlewares/errorHandler';
 import { container } from './infrastructure/di/Container';
+import { initializeElasticsearch, closeElasticsearch } from './config/elasticsearch';
 import {
   corsOptions,
   generalLimiter,
@@ -35,6 +36,9 @@ const PORT = config.PORT;
 
     // Inicializar contenedor de inyección de dependencias
     await container.initialize();
+
+    // Inicializar Elasticsearch (opcional)
+    await initializeElasticsearch();
 
     // Inicializar servicio de jobs (solo si hay DATABASE_URL)
     if (config.DATABASE_URL) {
@@ -111,6 +115,7 @@ const server = app.listen(PORT, () => {
   console.log(`📝 DTOs y Validación: ✅ Activado`);
   console.log(`📚 Swagger UI: ✅ Disponible en http://localhost:${PORT}/api-docs`);
   console.log(`🧼 Sanitización Avanzada: ✅ Activada (XSS, SQL/NoSQL Injection, Path Traversal)`);
+  console.log(`🔍 Búsqueda y Filtrado: ✅ Activado (Elasticsearch + Fuse.js)`);
   console.log(`📂 Logs de errores: ${config.NODE_ENV === 'production' ? '📝 Archivo' : '🖥️  Consola'}`);
   console.log(`\n📝 Endpoints disponibles:`);
   console.log(`\n🌍 RUTAS PÚBLICAS:`);
@@ -144,6 +149,11 @@ const server = app.listen(PORT, () => {
   console.log(`   GET  /auth/moderator-area - Admins y moderadores`);
   console.log(`   GET  /auth/user-area - Usuarios registrados`);
   console.log(`   GET  /auth/role-demo - Demo de roles`);
+  console.log(`\n🔍 BÚSQUEDA Y FILTRADO:`);
+  console.log(`   GET  /search/content - Búsqueda de contenido`);
+  console.log(`   GET  /search/users - Búsqueda de usuarios`);
+  console.log(`   GET  /search/suggest - Sugerencias de búsqueda`);
+  console.log(`   GET  /search/facets - Facetas para filtrado`);
   console.log(`\n💡 NOTAS:`);
   console.log(`   - Usa: Authorization: Bearer <token>`);
   console.log(`   - Versionado: Header 'Accept-Version: v1' o URL /v1/endpoint`);
@@ -170,6 +180,9 @@ const gracefulShutdown = async (signal: string) => {
           console.warn('⚠️ Job Service cleanup failed:', error);
         }
       }
+      
+      // Cerrar Elasticsearch
+      await closeElasticsearch();
       
       // Limpiar conexiones de base de datos
       await container.cleanup();

@@ -7,6 +7,7 @@ import protectedRoutes from './protectedRoutes';
 import metricsRoutes from './metricsRoutes';
 import jobRoutes from './jobRoutes';
 import versionRoutes from './versionRoutes';
+import searchRoutes from './searchRoutes';
 
 const router = Router();
 
@@ -33,5 +34,8 @@ router.use('/metrics', metricsRoutes);
 
 // Background jobs (Solo Admin)
 router.use('/jobs', jobRoutes);
+
+// Búsqueda y filtrado
+router.use('/search', searchRoutes);
 
 export default router;
