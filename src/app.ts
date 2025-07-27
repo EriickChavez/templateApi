@@ -16,6 +16,7 @@ import {
 import { swaggerSpec, swaggerUiHandler } from './config/swagger';
 import swaggerUi from 'swagger-ui-express';
 import { sanitizeInput } from './middlewares/validators';
+import { fullSanitizationSuite } from './middlewares/advancedSanitization';
 import { tracingMiddleware } from './middlewares/tracing';
 import { performanceMiddleware } from './middlewares/performance';
 import { versioningMiddleware, versionResponseTransform } from './middlewares/versioning';
@@ -74,8 +75,11 @@ app.use(securityLogger); // Logging de seguridad
 app.use(express.json({ limit: '10mb' })); // Límite de 10MB
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Validación de content-type y sanitización
+// Validación de content-type y sanitización avanzada
 app.use(validateContentType);
+// Aplicar suite completa de sanitización
+fullSanitizationSuite.forEach(middleware => app.use(middleware));
+// Sanitización básica adicional (mantener por compatibilidad)
 app.use(sanitizeInput);
 
 // Middleware para transformar respuestas según versión
@@ -106,6 +110,7 @@ const server = app.listen(PORT, () => {
   console.log(`🔢 API Versioning: ✅ Activado (v1 por defecto)`);
   console.log(`📝 DTOs y Validación: ✅ Activado`);
   console.log(`📚 Swagger UI: ✅ Disponible en http://localhost:${PORT}/api-docs`);
+  console.log(`🧼 Sanitización Avanzada: ✅ Activada (XSS, SQL/NoSQL Injection, Path Traversal)`);
   console.log(`📂 Logs de errores: ${config.NODE_ENV === 'production' ? '📝 Archivo' : '🖥️  Consola'}`);
   console.log(`\n📝 Endpoints disponibles:`);
   console.log(`\n🌍 RUTAS PÚBLICAS:`);

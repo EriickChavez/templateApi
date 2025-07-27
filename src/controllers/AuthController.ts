@@ -8,6 +8,7 @@ import { Email } from '../domain/value-objects/Email';
 import { PersonName } from '../domain/value-objects/PersonName';
 import { InMemoryUserRepository } from '../infrastructure/repositories/InMemoryUserRepository';
 import { createError } from '../middlewares/errorHandler';
+import { fieldSanitizers, FIELD_CONFIGS, sanitizeObject, SANITIZATION_LEVELS } from '../utils/sanitizer';
 
 export class AuthController extends BaseController {
   private userRepository = new InMemoryUserRepository();
@@ -17,13 +18,35 @@ export class AuthController extends BaseController {
    */
   register = async (req: Request, res: Response): Promise<Response> => {
     try {
-      const { email, password, firstName, lastName, middleName } = this.validateBody<{
+      // Sanitizar datos de entrada usando configuración predefinida
+      const rawData = this.validateBody<{
         email: string;
         password: string;
         firstName: string;
         lastName: string;
         middleName?: string;
       }>(req, ['email', 'password', 'firstName', 'lastName']);
+
+      // Aplicar sanitización específica para registro
+      const email = fieldSanitizers.email(rawData.email);
+      const password = fieldSanitizers.password(rawData.password);
+      const firstName = fieldSanitizers.name(rawData.firstName);
+      const lastName = fieldSanitizers.name(rawData.lastName);
+      const middleName = rawData.middleName ? fieldSanitizers.name(rawData.middleName) : undefined;
+
+      // Validaciones post-sanitización
+      if (!email) {
+        return ResponseUtil.error(res, 'Email inválido o contiene caracteres peligrosos', HttpStatus.BAD_REQUEST);
+      }
+      if (!password || password.length < 6) {
+        return ResponseUtil.error(res, 'Contraseña debe tener al menos 6 caracteres', HttpStatus.BAD_REQUEST);
+      }
+      if (!firstName || firstName.trim().length < 2) {
+        return ResponseUtil.error(res, 'Nombre debe tener al menos 2 caracteres', HttpStatus.BAD_REQUEST);
+      }
+      if (!lastName || lastName.trim().length < 2) {
+        return ResponseUtil.error(res, 'Apellido debe tener al menos 2 caracteres', HttpStatus.BAD_REQUEST);
+      }
 
       // Validar fortaleza de la contraseña
       const passwordValidation = AuthUtils.validatePasswordStrength(password);
@@ -101,10 +124,23 @@ export class AuthController extends BaseController {
    */
   login = async (req: Request, res: Response): Promise<Response> => {
     try {
-      const { email, password } = this.validateBody<{
+      // Sanitizar datos de entrada
+      const rawData = this.validateBody<{
         email: string;
         password: string;
       }>(req, ['email', 'password']);
+
+      // Aplicar sanitización para login
+      const email = fieldSanitizers.email(rawData.email);
+      const password = fieldSanitizers.password(rawData.password);
+
+      // Validaciones post-sanitización
+      if (!email) {
+        return ResponseUtil.error(res, 'Email inválido', HttpStatus.BAD_REQUEST);
+      }
+      if (!password) {
+        return ResponseUtil.error(res, 'Contraseña requerida', HttpStatus.BAD_REQUEST);
+      }
 
       // Buscar usuario por email
       const emailVO = new Email(email);
@@ -245,10 +281,22 @@ export class AuthController extends BaseController {
         return ResponseUtil.error(res, 'Usuario no autenticado', HttpStatus.UNAUTHORIZED);
       }
 
-      const { currentPassword, newPassword } = this.validateBody<{
+      // Sanitizar datos de entrada
+      const rawData = this.validateBody<{
         currentPassword: string;
         newPassword: string;
       }>(req, ['currentPassword', 'newPassword']);
+
+      const currentPassword = fieldSanitizers.password(rawData.currentPassword);
+      const newPassword = fieldSanitizers.password(rawData.newPassword);
+
+      // Validaciones post-sanitización
+      if (!currentPassword) {
+        return ResponseUtil.error(res, 'Contraseña actual requerida', HttpStatus.BAD_REQUEST);
+      }
+      if (!newPassword || newPassword.length < 6) {
+        return ResponseUtil.error(res, 'Nueva contraseña debe tener al menos 6 caracteres', HttpStatus.BAD_REQUEST);
+      }
 
       // Validar nueva contraseña
       const passwordValidation = AuthUtils.validatePasswordStrength(newPassword);
@@ -287,10 +335,19 @@ export class AuthController extends BaseController {
    */
   changeUserRole = async (req: Request, res: Response): Promise<Response> => {
     try {
-      const { email, newRole } = this.validateBody<{
+      // Sanitizar datos de entrada
+      const rawData = this.validateBody<{
         email: string;
         newRole: UserRole;
       }>(req, ['email', 'newRole']);
+
+      const email = fieldSanitizers.email(rawData.email);
+      const newRole = rawData.newRole; // Los enums no necesitan sanitización, pero sí validación
+
+      // Validaciones post-sanitización
+      if (!email) {
+        return ResponseUtil.error(res, 'Email inválido', HttpStatus.BAD_REQUEST);
+      }
 
       // Verificar que el rol sea válido
       if (!Object.values(UserRole).includes(newRole)) {
