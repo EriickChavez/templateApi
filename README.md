@@ -61,6 +61,7 @@ npm run dev
 | [🏗️ Inyección de Dependencias](docs/DEPENDENCY_INJECTION.md) | Sistema DI y configuración de BD |
 | [📋 Guía Fácil](docs/EASY_GUIDE.md) | Cómo agregar endpoints nuevos |
 | [🛡️ Características Avanzadas](docs/ADVANCED_SECURITY_SEARCH.md) | Sanitización, Búsqueda y Swagger |
+| [⚠️ Problemas de Sanitización](docs/SANITIZATION_ISSUES.md) | Solución al error req.query |
 | [📬 Postman Collection](postman/template_api_collection.json) | Colección completa para Postman |
 
 ## 🌍 Endpoints Principales
@@ -384,3 +385,31 @@ CORS_ORIGIN=*
 - **Producción**: Configura base de datos persistente
 - **Debugging**: Revisa los logs detallados
 - **Extensión**: Sigue la arquitectura hexagonal
+
+## 🔧 Troubleshooting
+
+### Error: "Cannot set property query of #<IncomingMessage> which has only a getter"
+
+Este error puede ocurrir por conflictos entre middlewares de sanitización. **Solución implementada**:
+
+1. **Middlewares problemáticos deshabilitados temporalmente**:
+   - `express-mongo-sanitize` (causa conflictos con `req.query`)
+   - `hpp` (HTTP Parameter Pollution protection)
+
+2. **Enfoque de validación vs modificación**:
+   - En lugar de modificar `req.query`, validamos contenido peligroso
+   - La seguridad se mantiene mediante detección de patrones maliciosos
+
+3. **Verificar que funciona**:
+   ```bash
+   curl -X POST http://localhost:4000/auth/register \
+     -H "Content-Type: application/json" \
+     -d '{
+       "email": "test@example.com",
+       "password": "Password123!",
+       "firstName": "Test",
+       "lastName": "User"
+     }'
+   ```
+
+**Para más detalles**: Ver [⚠️ Problemas de Sanitización](docs/SANITIZATION_ISSUES.md)

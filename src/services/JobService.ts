@@ -40,20 +40,22 @@ export class JobService {
 
   constructor() {
     if (!config.DATABASE_URL) {
-      throw new Error('JobService requires DATABASE_URL to be configured');
+      console.warn('⚠️ JobService: DATABASE_URL not configured, using memory storage (jobs will not persist)');
+      // Use memory storage when no DATABASE_URL is provided
+      this.agenda = new Agenda();
+    } else {
+      // Use database storage when DATABASE_URL is available
+      this.agenda = new Agenda({
+        db: {
+          address: config.DATABASE_URL,
+          collection: 'jobs'
+        },
+        processEvery: '10 seconds', // Procesar jobs cada 10 segundos
+        maxConcurrency: 5, // Máximo 5 jobs concurrentes
+        defaultConcurrency: 3, // 3 jobs por defecto
+        defaultLockLifetime: 10000 // 10 segundos de lock
+      });
     }
-    
-    // Configurar Agenda
-    this.agenda = new Agenda({
-      db: {
-        address: config.DATABASE_URL,
-        collection: 'jobs'
-      },
-      processEvery: '10 seconds', // Procesar jobs cada 10 segundos
-      maxConcurrency: 5, // Máximo 5 jobs concurrentes
-      defaultConcurrency: 3, // 3 jobs por defecto
-      defaultLockLifetime: 10000 // 10 segundos de lock
-    });
 
     this.setupEventListeners();
     this.defineJobs();
@@ -144,8 +146,20 @@ export class JobService {
     try {
       // Using agenda's internal _collection property to access MongoDB collection
       const collection = (this.agenda as any)._collection;
+      
+      // Si no hay colección (modo memoria), devolver estadísticas básicas
       if (!collection) {
-        throw new Error('Database collection not available');
+        console.warn('⚠️ JobService: Running in memory mode, returning basic stats');
+        return [
+          {
+            _id: 'memory-jobs',
+            total: 0,
+            completed: 0,
+            failed: 0,
+            running: 0,
+            note: 'Running in memory mode - persistent stats not available'
+          }
+        ];
       }
       
       const stats = await collection.aggregate([
@@ -169,7 +183,17 @@ export class JobService {
       return stats;
     } catch (error) {
       console.error('❌ Failed to get job stats:', error);
-      return [];
+      // Return basic error info instead of empty array
+      return [
+        {
+          _id: 'error',
+          total: 0,
+          completed: 0,
+          failed: 0,
+          running: 0,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        }
+      ];
     }
   }
 

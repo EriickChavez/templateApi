@@ -142,18 +142,30 @@ export const performanceMiddleware = (req: Request, res: Response, next: NextFun
     const endTime = performance.now();
     const duration = Math.round(endTime - startTime);
     
+    // Validar y sanitizar valores para evitar undefined/NaN
+    const memUsage = process.memoryUsage();
+    const cpuUsage = performanceMonitor.getCpuUsage();
+    
     const metric: PerformanceMetrics = {
       requestId: req.requestId || 'unknown',
       correlationId: req.correlationId || 'unknown',
-      method: req.method,
-      url: req.originalUrl || req.url,
-      statusCode: res.statusCode,
-      duration,
-      memoryUsage: process.memoryUsage(),
-      cpuUsage: performanceMonitor.getCpuUsage(),
+      method: req.method || 'UNKNOWN',
+      url: req.originalUrl || req.url || '/unknown',
+      statusCode: res.statusCode || 0,
+      duration: isNaN(duration) ? 0 : Math.max(0, duration),
+      memoryUsage: {
+        rss: memUsage.rss || 0,
+        heapUsed: memUsage.heapUsed || 0,
+        heapTotal: memUsage.heapTotal || 0,
+        external: memUsage.external || 0
+      },
+      cpuUsage: cpuUsage ? {
+        user: cpuUsage.user || 0,
+        system: cpuUsage.system || 0
+      } : undefined,
       timestamp: new Date().toISOString(),
-      userAgent: req.headers['user-agent'],
-      ip: req.ip || req.connection.remoteAddress || 'unknown',
+      userAgent: req.headers['user-agent'] || 'unknown',
+      ip: req.ip || req.connection?.remoteAddress || 'unknown',
       userId: (req as any).user?.id
     };
 
@@ -201,11 +213,15 @@ export const metricsEndpoints = {
       methodStats[metric.method].avgTime += metric.duration;
     });
     
-    // Calcular promedios
+    // Calcular promedios (evitar división por cero)
     Object.keys(methodStats).forEach(method => {
-      methodStats[method].avgTime = Math.round(
-        methodStats[method].avgTime / methodStats[method].count
-      );
+      if (methodStats[method].count > 0) {
+        methodStats[method].avgTime = Math.round(
+          methodStats[method].avgTime / methodStats[method].count
+        );
+      } else {
+        methodStats[method].avgTime = 0;
+      }
     });
     
     // Top endpoints más lentos
@@ -220,12 +236,12 @@ export const metricsEndpoints = {
       endpointStats[key].maxTime = Math.max(endpointStats[key].maxTime, metric.duration);
     });
     
-    // Calcular promedios y ordenar por tiempo de respuesta
+    // Calcular promedios y ordenar por tiempo de respuesta (evitar división por cero)
     const topSlowEndpoints = Object.entries(endpointStats)
       .map(([endpoint, data]) => ({
         endpoint,
         count: data.count,
-        avgTime: Math.round(data.avgTime / data.count),
+        avgTime: data.count > 0 ? Math.round(data.avgTime / data.count) : 0,
         maxTime: data.maxTime
       }))
       .sort((a, b) => b.avgTime - a.avgTime)

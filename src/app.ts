@@ -40,17 +40,13 @@ const PORT = config.PORT;
     // Inicializar Elasticsearch (opcional)
     await initializeElasticsearch();
 
-    // Inicializar servicio de jobs (solo si hay DATABASE_URL)
-    if (config.DATABASE_URL) {
-      try {
-        const { jobService } = await import('./services/JobService');
-        await jobService.initialize();
-        console.log('✅ Job Service initialized');
-      } catch (error) {
-        console.warn('⚠️ Job Service initialization failed (continuing without it):', error);
-      }
-    } else {
-      console.log('ℹ️ Job Service skipped (no DATABASE_URL configured)');
+    // Inicializar servicio de jobs (siempre, con o sin base de datos)
+    try {
+      const { jobService } = await import('./services/JobService');
+      await jobService.initialize();
+      console.log('✅ Job Service initialized');
+    } catch (error) {
+      console.warn('⚠️ Job Service initialization failed (continuing without it):', error);
     }
 
     console.log('✅ Sistema inicializado correctamente');
@@ -171,14 +167,12 @@ const gracefulShutdown = async (signal: string) => {
 
     try {
       // Limpiar servicio de jobs
-      if (config.DATABASE_URL) {
-        try {
-          const { jobService } = await import('./services/JobService');
-          await jobService.shutdown();
-          console.log('🔌 Job Service shut down');
-        } catch (error) {
-          console.warn('⚠️ Job Service cleanup failed:', error);
-        }
+      try {
+        const { jobService } = await import('./services/JobService');
+        await jobService.shutdown();
+        console.log('🔌 Job Service shut down');
+      } catch (error) {
+        console.warn('⚠️ Job Service cleanup failed:', error);
       }
       
       // Cerrar Elasticsearch

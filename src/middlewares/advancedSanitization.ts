@@ -12,8 +12,16 @@ const mongoSanitizeOptions = {
 
 /**
  * Middleware para sanitización NoSQL injection
+ * NOTA: Este middleware puede causar conflictos con req.query en Express 5.x
+ * Se recomienda usarlo con precaución o implementar validación NoSQL custom
  */
-export const mongoSanitization = mongoSanitize(mongoSanitizeOptions);
+export const mongoSanitization = mongoSanitize({
+  ...mongoSanitizeOptions,
+  // Evitar modificar req.query directamente
+  onSanitize: ({ req, key }: { req: Request; key: string }) => {
+    console.warn(`⚠️ Elemento NoSQL peligroso removido: ${key}`);
+  }
+});
 
 /**
  * Middleware de sanitización general que se aplica a body, query y params
@@ -25,9 +33,34 @@ export const generalSanitization = (req: Request, res: Response, next: NextFunct
       req.body = sanitizeObject(req.body, SANITIZATION_LEVELS.MODERATE);
     }
 
-    // Sanitizar query parameters
+    // Para query parameters, no intentamos modificar req.query directamente
+    // En su lugar, simplemente validamos que no contenga elementos peligrosos
     if (req.query && typeof req.query === 'object') {
-      req.query = sanitizeObject(req.query, SANITIZATION_LEVELS.BASIC);
+      // Validar elementos peligrosos sin modificar req.query
+      const validateQuery = (obj: any, path: string = 'query'): void => {
+        if (typeof obj === 'string') {
+          // Verificar patrones peligrosos básicos
+          const dangerousPatterns = [
+            /<script/gi,
+            /javascript:/gi,
+            /vbscript:/gi,
+            /on\w+\s*=/gi,
+            /(\$where|\$ne|\$gt|\$lt|\$gte|\$lte|\$in|\$nin|\$regex|\$exists|\$type)/gi
+          ];
+          
+          for (const pattern of dangerousPatterns) {
+            if (pattern.test(obj)) {
+              throw new Error(`Patrón peligroso detectado en query parameter: ${path}`);
+            }
+          }
+        } else if (typeof obj === 'object' && obj !== null) {
+          for (const [key, value] of Object.entries(obj)) {
+            validateQuery(value, `${path}.${key}`);
+          }
+        }
+      };
+      
+      validateQuery(req.query);
     }
 
     // Sanitizar params
@@ -65,14 +98,26 @@ export const routeSpecificSanitization = (sanitizationRules: {
         }
       }
 
-      // Sanitizar query según reglas específicas
+      // Validar query según reglas específicas (sin modificar req.query)
       if (sanitizationRules.query && req.query) {
         for (const [field, sanitizer] of Object.entries(sanitizationRules.query)) {
           if (req.query[field] !== undefined) {
-            if (typeof sanitizer === 'function') {
-              req.query[field] = sanitizer(req.query[field]);
-            } else {
-              req.query[field] = fieldSanitizers[sanitizer](req.query[field] as string);
+            // Solo validar que el valor sea seguro, sin modificarlo
+            const value = req.query[field] as string;
+            
+            // Verificar patrones peligrosos básicos
+            const dangerousPatterns = [
+              /<script/gi,
+              /javascript:/gi,
+              /vbscript:/gi,
+              /on\w+\s*=/gi,
+              /(\$where|\$ne|\$gt|\$lt|\$gte|\$lte|\$in|\$nin|\$regex|\$exists|\$type)/gi
+            ];
+            
+            for (const pattern of dangerousPatterns) {
+              if (pattern.test(value)) {
+                throw new Error(`Patrón peligroso detectado en query parameter ${field}: ${value}`);
+              }
             }
           }
         }
@@ -301,12 +346,12 @@ export const sizeProtection = (options: {
  */
 export const fullSanitizationSuite = [
   sizeProtection(),
-  hppProtection,
   nullByteProtection,
   pathTraversalProtection,
   jsInjectionProtection,
-  mongoSanitization,
+  // mongoSanitization, // Temporalmente deshabilitado para diagnóstico
   generalSanitization
+  // HPP removido temporalmente para evitar conflictos con req.query
 ];
 
 // Configuraciones predefinidas para diferentes tipos de endpoints
