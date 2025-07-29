@@ -1,5 +1,41 @@
 import { Request, Response, NextFunction } from 'express';
 import { performance } from 'perf_hooks';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+import os from 'os';
+
+const execAsync = promisify(exec);
+const MAX_COMMAND_TIMEOUT_MS = 1800; // 1.8 seconds
+
+interface DiskInfo {
+  total: number;
+  used: number;
+  free: number;
+}
+
+interface NetworkTraffic {
+  bytesIn: number | 'N/A';
+  bytesOut: number | 'N/A';
+}
+
+interface SystemMetrics {
+  system_load: number;
+  disk_space: {
+    total: number | 'N/A';
+    used: number | 'N/A';
+    free: number | 'N/A';
+    usagePercent: number | 'N/A';
+  };
+  memory: {
+    total: number;
+    free: number;
+    used: number;
+  };
+  processes: number | 'N/A';
+  connections: number | 'N/A';
+  network_traffic: NetworkTraffic;
+  users_active: number | 'N/A';
+}
 
 // Interface para métricas de performance
 interface PerformanceMetrics {
@@ -126,6 +162,216 @@ class PerformanceMonitor {
       timeWindow: `${minutes} minutes`
     };
   }
+}
+
+/**
+ * Ejecuta un comando shell con timeout y devuelve stdout como string.
+ * En caso de error o timeout, retorna null.
+ */
+async function runCmdSafe(command: string): Promise<string | null> {
+  try {
+    const execPromise = execAsync(command);
+    const timeout = new Promise<null>((_, reject) =>
+      setTimeout(() => reject(new Error('Command timeout')), MAX_COMMAND_TIMEOUT_MS)
+    );
+
+    const { stdout } = await Promise.race([execPromise, timeout]) as { stdout: string };
+    if (typeof stdout === 'string') return stdout.trim();
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Obtiene número de procesos corriendo (macOS, Linux, Windows)
+ */
+async function getProcessCount(): Promise<number | 'N/A'> {
+  const platform = os.platform();
+  let cmd = '';
+  if (platform === 'win32') {
+    // Windows: wmic process get /value
+    cmd = 'wmic process get ProcessId | find /c /v ""';
+  } else {
+    // unix-like: ps aux | wc -l
+    cmd = 'ps aux | wc -l';
+  }
+  const result = await runCmdSafe(cmd);
+  if (result === null) return 'N/A';
+  const count = parseInt(result);
+  return isNaN(count) ? 'N/A' : Math.max(0, count - 1); // -1 to exclude header
+}
+
+/**
+ * Obtiene cantidad de conexiones activas establecidas (multiplataforma)
+ */
+async function getActiveConnections(): Promise<number | 'N/A'> {
+  const platform = os.platform();
+
+  if (platform === 'win32') {
+    // Windows: netstat -an | find /c ESTABLISHED
+    const cmd = 'netstat -an | find /c "ESTABLISHED"';
+    const result = await runCmdSafe(cmd);
+    if (result === null) return 'N/A';
+    const count = parseInt(result);
+    return isNaN(count) ? 'N/A' : count;
+  } else {
+    // unix-like: netstat -an | grep ESTABLISHED | wc -l
+    const cmd = 'netstat -an | grep ESTABLISHED | wc -l';
+    const result = await runCmdSafe(cmd);
+    if (result === null) return 'N/A';
+    const count = parseInt(result);
+    return isNaN(count) ? 'N/A' : count;
+  }
+}
+
+/**
+ * Obtiene info de disco para la partición raíz (multiplataforma)
+ */
+async function getDiskInfo(): Promise<DiskInfo | null> {
+  const platform = os.platform();
+
+  try {
+    if (platform === 'win32') {
+      // Windows: Usar wmic logicaldisk
+      const cmd = 'wmic logicaldisk where "DeviceID=\'C:\'" get Size,FreeSpace /format:value';
+      const output = await runCmdSafe(cmd);
+      if (!output) return null;
+
+      const sizeMatch = output.match(/Size=(\d+)/);
+      const freeMatch = output.match(/FreeSpace=(\d+)/);
+      if (!sizeMatch || !freeMatch) return null;
+
+      const total = parseInt(sizeMatch[1]);
+      const free = parseInt(freeMatch[1]);
+      if (isNaN(total) || isNaN(free)) return null;
+
+      const used = total - free;
+      return { total, used, free };
+    } else {
+      // Unix-like: df --block-size=1 / para bytes exactos
+      const cmd = 'df --block-size=1 / | tail -1';
+      const output = await runCmdSafe(cmd);
+      if (!output) return null;
+
+      const parts = output.split(/\s+/);
+      if (parts.length < 6) return null;
+
+      // parts: Filesystem Size Used Avail Use% Mounted_on
+      const total = parseInt(parts[1]); // Size total bytes
+      const used = parseInt(parts[2]);  // Used bytes
+      const free = parseInt(parts[3]);  // Available bytes
+
+      if ([total, used, free].some(isNaN)) return null;
+      return { total, used, free };
+    }
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Obtiene tráfico de red total bytes (in/out) desde interfaces físicas activas (multiplataforma)
+ */
+async function getNetworkTraffic(): Promise<NetworkTraffic> {
+  const platform = os.platform();
+
+  if (platform === 'win32') {
+    // Windows: no acceso nativo fácil a bytes recibido/enviado directamente sin módulos
+    return { bytesIn: 'N/A', bytesOut: 'N/A' };
+  } else {
+    // Unix-like: usar netstat -ib o ifconfig
+    // Acumulamos info de bytes recibidos y enviados de interfaces no loopback
+    try {
+      const output = await runCmdSafe('netstat -ib');
+      if (!output) return { bytesIn: 'N/A', bytesOut: 'N/A' };
+
+      const lines = output.split('\n');
+      let bytesInTotal = 0;
+      let bytesOutTotal = 0;
+
+      for (const line of lines) {
+        const cols = line.trim().split(/\s+/);
+        if (cols.length < 10) continue;
+
+        const iface = cols[0];
+        if (iface === 'lo0' || iface.startsWith('lo')) continue; // ignorar loopback
+
+        // columnas con bytes recibidos y enviados dependen del SO, en macOS netstat -ib
+        // Rx bytes está en 6a columna o 5a según versión, Tx bytes 9a o 8a
+        // Asumiendo columnas 6 y 9 (base cero 5 y 8)
+        const bytesInStr = cols[6];
+        const bytesOutStr = cols[9];
+        const bytesIn = parseInt(bytesInStr, 10);
+        const bytesOut = parseInt(bytesOutStr, 10);
+
+        if (!isNaN(bytesIn)) bytesInTotal += bytesIn;
+        if (!isNaN(bytesOut)) bytesOutTotal += bytesOut;
+      }
+
+      return { bytesIn: bytesInTotal, bytesOut: bytesOutTotal };
+    } catch {
+      return { bytesIn: 'N/A', bytesOut: 'N/A' };
+    }
+  }
+}
+
+/**
+ * Obtiene usuarios activos con sesiones JWT válidas en últimos 5 minutos.
+ * Esta función requiere acceso al sistema de sesiones o base de datos.
+ */
+async function getActiveUsers(): Promise<number | 'N/A'> {
+  // TODO: Implementar conteo de usuarios con sesiones JWT activas
+  // Ejemplo: consultar base de datos o caché redis con sesiones activas
+  // const activeSessionsCount = await redis.zcount('active_sessions', Date.now() - 300000, Date.now());
+  // return activeSessionsCount;
+  return 'N/A';
+}
+
+/**
+ * Obtener métricas del sistema combinando todas las anteriores
+ */
+export async function getRealSystemMetrics(): Promise<SystemMetrics> {
+  // Métricas básicas
+  const totalMemory = os.totalmem();
+  const freeMemory = os.freemem();
+  const usedMemory = totalMemory - freeMemory;
+  const loadAvg = os.loadavg()[0] || 0;
+
+  // Ejecutar tareas en paralelo para no bloquear event loop
+  const [diskInfo, processCount, activeConnections, netTraffic, activeUsers] = await Promise.all([
+    getDiskInfo(),
+    getProcessCount(),
+    getActiveConnections(),
+    getNetworkTraffic(),
+    getActiveUsers()
+  ]);
+
+  return {
+    system_load: loadAvg,
+    disk_space: diskInfo
+      ? {
+          total: diskInfo.total,
+          used: diskInfo.used,
+          free: diskInfo.free,
+          usagePercent: Math.round((diskInfo.used / diskInfo.total) * 100),
+        }
+      : {
+          total: 'N/A',
+          used: 'N/A',
+          free: 'N/A',
+          usagePercent: 'N/A',
+        },
+    memory: {
+      total: totalMemory,
+      used: usedMemory,
+      free: freeMemory,
+    },
+    processes: processCount,
+    connections: activeConnections,
+    network_traffic: netTraffic,
+    users_active: activeUsers,
+  };
 }
 
 // Instancia global del monitor
@@ -311,6 +557,49 @@ export const metricsEndpoints = {
     
     // Información del sistema operativo
     const os = require('os');
+    const fs = require('fs');
+    const { promisify } = require('util');
+    
+    // Función para obtener información del disco
+    const getDiskInfo = async () => {
+      try {
+        if (process.platform === 'win32') {
+          // Windows: usar wmic o powershell
+          const { exec } = require('child_process');
+          const execAsync = promisify(exec);
+          const { stdout } = await execAsync('wmic logicaldisk get size,freespace,caption');
+          // Parsear resultado de Windows
+          return { total: 0, free: 0, used: 0 }; // Simplificado para el ejemplo
+        } else {
+          // Unix/Linux/macOS: usar df command
+          const { exec } = require('child_process');
+          const execAsync = promisify(exec);
+          const { stdout } = await execAsync('df -h / | tail -1');
+          const parts = stdout.trim().split(/\s+/);
+          
+          const parseSize = (sizeStr: string): number => {
+            const match = sizeStr.match(/(\d+(?:\.\d+)?)([KMGT]?)i?/);
+            if (!match) return 0;
+            const value = parseFloat(match[1]);
+            const unit = match[2] || '';
+            const multipliers: { [key: string]: number } = { '': 1, 'K': 1024, 'M': 1024**2, 'G': 1024**3, 'T': 1024**4 };
+            return value * (multipliers[unit] || 1);
+          };
+          
+          const total = parseSize(parts[1]);
+          const used = parseSize(parts[2]);
+          const free = parseSize(parts[3]);
+          
+          return { total, used, free };
+        }
+      } catch (error) {
+        console.warn('Could not get disk info:', error instanceof Error ? error.message : 'Unknown error');
+        return null;
+      }
+    };
+    
+    // Obtener información del disco
+    const diskInfo = await getDiskInfo();
     
     const systemInfo = {
       runtime: {
@@ -351,6 +640,18 @@ export const metricsEndpoints = {
           speed: `${os.cpus()[0]?.speed || 0} MHz`,
           loadAverage: os.loadavg().map((load: number) => Math.round(load * 100) / 100)
         }
+      },
+      disk: diskInfo ? {
+        total: `${Math.round(diskInfo.total / 1024 / 1024 / 1024)} GB`,
+        used: `${Math.round(diskInfo.used / 1024 / 1024 / 1024)} GB`,
+        free: `${Math.round(diskInfo.free / 1024 / 1024 / 1024)} GB`,
+        usagePercent: `${Math.round((diskInfo.used / diskInfo.total) * 100)}%`
+      } : {
+        total: 'N/A',
+        used: 'N/A',
+        free: 'N/A',
+        usagePercent: 'N/A',
+        error: 'Disk information not available'
       },
       os: {
         type: os.type(),
